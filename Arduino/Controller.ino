@@ -19,5 +19,4 @@ void loop() {
       servo.write(i);
       delay(10);
     }
-    asd
 }
