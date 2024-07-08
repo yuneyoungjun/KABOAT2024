@@ -1,8 +1,10 @@
 #include<Servo.h> //Servo 라이브러리를 추가
-Servo servo;      //Servo 클래스로 servo객체 생성
+Servo servo1, servo2, servo3;      //Servo 클래스로 servo객체 생성
 
 void setup() {
-  servo.attach(7); 
+//  servo1.attach(7); 
+//  servo2.attach(8); 
+  servo3.attach(9); 
 }
 
 void loop() {
@@ -16,7 +18,9 @@ void loop() {
       if(!mode) i++;
       else i--;
       
-      servo.write(i);
+//      servo1.write(i);
+//      servo2.write(i);
+      servo3.write(i);
       delay(10);
     }
 }
