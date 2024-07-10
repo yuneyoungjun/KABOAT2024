@@ -15,14 +15,14 @@ data = Int16MultiArray()
 
 i = 0
 while(1):
-    a = int(400 * math.sin(i))
-    b = int(400 * math.cos(i))
+    a = int(300 * math.sin(i))
+    b = int(300 * math.cos(i))
 
     i += 0.1
 
-    if(i > 10):
+    if(i > 5):
         a=b=0
-    data.data = [0, 0, 0, 0, 0, 0]
+    data.data = [0, 0, 0, 0, 0, a]
     print(data.data)
     pub.publish(data)
     time.sleep(0.1)
