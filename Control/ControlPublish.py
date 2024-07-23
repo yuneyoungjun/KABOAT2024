@@ -8,6 +8,7 @@ from std_msgs.msg import Int16MultiArray
 rospy.init_node('Arduino', anonymous=False)
 pub = rospy.Publisher('control', Int16MultiArray, queue_size=100)
 data = Int16MultiArray()
+
 #                                   Data Info
 # [servo_left, servo_right, servo_front, thrust_left, thrust_right, thrust_front]
 # servo range : -45deg to 45deg
