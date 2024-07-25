@@ -6,26 +6,27 @@ Servo SL, SR, SF ;  //Servo Motor
 Servo TL, TR, TF ;  //Thruster 
 
 //tx12
-int sensorPin[] = {8, 9, 10, 11, 12, 13};
-int channel[] = {0, 0, 0, 0, 0, 0};
+int sensorPin[] = {0, 13, 12, 11, 10, 9, 8};
+int channel[] = {0, 0, 0, 0, 0, 0, 0};
 
 
 ros::NodeHandle  nh;
 int data[] = {0, 0, 0, 0, 0, 0};
-void messageCallback(const std_msgs::Int16MultiArray& sub_msg) {
+
+void messageCallback(const std_msgs::Int16MultiArray & sub_msg) {
   for(int i = 0; i < 6; i++)
   {
     data[i] = sub_msg.data[i];
   }
 }
-ros::Subscriber<std_msgs::Int16MultiArray> sub("control", messageCallback);
+ros::Subscriber<std_msgs::Int16MultiArray> sub("control", messageCallback); // 일단 보류
 
 //servo 함수에서는 원하는 회전 각도를 입력하면 그 각도로 회전 (-45deg to 45deg)
 void servo(int l = 0, int r = 0, int f = 0)
 {
-  l = constrain(l, -45, 45);
-  r = constrain(r, -45, 45);
-  f = constrain(f, -45, 45);
+  l = constrain(l, -35, 35);
+  r = constrain(r, -35, 35);
+  f = constrain(f, -35, 35);
 
   SL.write(90 + l);
   SR.write(90 + r);
@@ -67,14 +68,21 @@ void setting()
 
 void tx12()
 {
-  for(int i = 0; i < 6; i++)
+  for(int i = 1; i < 7; i++)
   {
     channel[i] = pulseIn(sensorPin[i],HIGH) - 1490;
-    channel[3] = 0;
+    // channel[3] = 0;
     if(channel[i] < 30 && channel[i] > -30) channel[i] = 0;
     
-    channel[i] = constrain(channel[i], -500, 500);
+    if (i == 3)
+    {
+      channel[i] = map(channel[i], -500, 500, -35, 35);
+    }
 
+    else
+    {
+      channel[i] = constrain(channel[i], -500, 500);
+    }
   }
 }
 
@@ -90,10 +98,15 @@ void setup()
 void loop() 
 {
   tx12();
-  if(channel[1] < -100)
+  if(channel[5] < -100)
   {
-    thrust(int(0.5 * (-channel[4]-channel[5])), int(0.5 * (-channel[4]+channel[5])), -channel[2]);
+    thrust(int(0.5 * (-channel[2]-channel[1])), // left
+           int(0.5 * (-channel[2]+channel[1])), // right
+           -channel[1]); // forward
+
+    // servo(channel[3], channel[3], -channel[3]);
   }
+
   else
   {
     thrust(0, 0, 0);
