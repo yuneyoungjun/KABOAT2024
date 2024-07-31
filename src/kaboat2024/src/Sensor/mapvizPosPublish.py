@@ -65,7 +65,7 @@ if __name__ == '__main__':
     # GPS 데이터 수신을 위한 구독자
     rospy.Subscriber('/RTK_GPS/smc_2000/fix', NavSatFix, gps_callback)
     # 헤딩 데이터 수신을 위한 구독자
-    rospy.Subscriber('/IMU', Float32, heading_callback)
+    rospy.Subscriber('/KABOAT/Heading', Float32, heading_callback)
 
     # PoseStamped 메시지를 publish 하기 위한 퍼블리셔
     pose_pub = rospy.Publisher('/pose_stamped', PoseStamped, queue_size=10)
