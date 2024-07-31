@@ -3,7 +3,7 @@ import rospy
 from std_msgs.msg import Float32
 from ublox_msgs.msg import NavRELPOSNED
 
-def HEADcallback(msg):
+def callback(msg):
     heading = Float32()
     head = float(msg.relPosHeading/100000)
     if head > 180: head -= 360
@@ -15,6 +15,6 @@ def HEADcallback(msg):
 
 if __name__=="__main__":
     rospy.init_node("Heading_Node")
-    pub = rospy.Publisher("Heading", Float32, queue_size=10)
-    rospy.Subscriber("RTK_GPS/smc_2000/navrelposned",NavRELPOSNED, HEADcallback)
+    pub = rospy.Publisher("KABOAT/Heading", Float32, queue_size=10)
+    rospy.Subscriber("RTK_GPS/smc_plus/navrelposned",NavRELPOSNED, callback)
     rospy.spin()

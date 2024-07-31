@@ -26,6 +26,6 @@ def listener():
     
 
 if __name__ == '__main__':
-    pub = rospy.Publisher('UTM', Float64MultiArray, queue_size=10)
+    pub = rospy.Publisher('KABOAT/UTM', Float64MultiArray, queue_size=10)
     listener()
     rospy.spin()
