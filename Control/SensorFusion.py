@@ -71,7 +71,7 @@ def listener():
     fig, ax = plt.subplots()
     
     # 애니메이션 설정
-    ani = FuncAnimation(fig, update, interval=100)  # 100ms마다 업데이트
+    ani = FuncAnimation(fig, update, interval=10)  # 100ms마다 업데이트
     plt.show()
 
 def callback(lidar_data, gps_data, imu_data):
