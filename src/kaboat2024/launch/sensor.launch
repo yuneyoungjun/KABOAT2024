@@ -1,0 +1,61 @@
+<launch>
+  <arg name="UNO3_port" default="/dev/ttyACM1"/>
+  <arg name="GPS_port" default="/dev/ttyACM0"/>
+  <arg name="leaf_size" default="0.1"/>
+
+  <group ns="Arduino">
+    <node name="arduino" pkg="rosserial_python" type="serial_node.py" output="screen">
+      <param name="/port" value="$(arg UNO3_port)"/>
+    </node>
+  </group>
+
+  <!-- GPS setup -->
+  <group ns="RTK_GPS">
+    <include file="$(find ublox_gps)/launch/ublox_zed-f9p_base.launch"/>
+    <include file="$(find ublox_gps)/launch/ublox_zed-f9p_rover.launch"/>
+  </group>
+
+  <!-- LiDAR setup -->
+  <group ns="LiDAR">
+    <include file="$(find livox_ros_driver2)/launch_ROS1/msg_MID360.launch"/>
+    <node pkg="nodelet" type="nodelet" name="pcl_manager" args="manager" output="screen" />
+    
+    <!-- Run a VoxelGrid filter to clean NaNs and downsample the data -->
+    <node pkg="nodelet" type="nodelet" name="voxel_grid" args="load pcl/VoxelGrid pcl_manager" output="screen">
+        <remap from="~input" to="/LiDAR/livox/lidar" />
+        <rosparam>
+        filter_field_name: z
+        filter_limit_min: 0.01
+        filter_limit_max: 0.20
+        filter_limit_negative: False
+        leaf_size: 0.05
+        downsample_all_data: true
+        </rosparam>
+    </node>
+
+    <!-- Run pointcloud_to_laser node -->
+    <node pkg="pointcloud_to_laserscan" type="pointcloud_to_laserscan_node" name="pointcloud_to_laserscan"  >
+        <remap from="cloud_in" to="/LiDAR/voxel_grid/output"/>
+        <remap from="scan" to="/laserscan"/>
+        <rosparam>
+            target_frame: livox_frame
+            transform_tolerance: 0.01
+            max_height: 1.0
+            min_height: 0.0
+
+            angle_max: 1.0472
+            angle_min: -1.0472
+            angle_increment: 0.0087 # M_PI/360.0 (every degreee)
+            scan_time: 0.5
+            range_max: 4.0
+            range_min: 0.5
+            use_inf: true
+            <!-- inf_epsilon: -1 -->
+            concurrency_level: 1
+        </rosparam>
+    </node>
+  </group>
+
+
+
+</launch>
