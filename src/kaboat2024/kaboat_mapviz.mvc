@@ -1,6 +1,6 @@
 capture_directory: "~"
 fixed_frame: map
-target_frame: <none>
+target_frame: map
 fix_orientation: false
 rotate_90: false
 enable_antialiasing: true
@@ -9,9 +9,9 @@ show_status_bar: true
 show_capture_tools: true
 window_width: 1848
 window_height: 1016
-view_scale: 0.03732091
-offset_x: 17.42088
-offset_y: -14.44298
+view_scale: 0.9999998
+offset_x: -72.81075
+offset_y: 131.6201
 use_latest_transforms: true
 background: "#a0a0a4"
 displays:
@@ -27,79 +27,26 @@ displays:
           type: wmts
       bing_api_key: ""
       source: google_maps
+  - type: mapviz_plugins/pose
+    name: new display
+    config:
+      visible: true
+      collapsed: false
+      topic: /pose_stamped
+      color: "#ef2929"
+      draw_style: arrows
+      position_tolerance: 0
+      buffer_size: 1
+      show_laps: false
+      static_arrow_sizes: false
+      arrow_size: 349
   - type: mapviz_plugins/navsat
     name: new display
     config:
-      visible: false
-      collapsed: true
-      topic: /RTK_GPS/ublox_gps/fix
+      visible: true
+      collapsed: false
+      topic: /RTK_GPS/smc_2000/fix
       color: "#00ff00"
-      draw_style: lines
+      draw_style: points
       position_tolerance: 0
-      buffer_size: 0
-  - type: mapviz_plugins/pose
-    name: new display
-    config:
-      visible: true
-      collapsed: true
-      topic: /robot_pose
-      color: "#ad7fa8"
-      draw_style: lines
-      position_tolerance: 0
-      buffer_size: 0
-      show_laps: false
-      static_arrow_sizes: false
-      arrow_size: 25
-  - type: mapviz_plugins/tf_frame
-    name: new display
-    config:
-      visible: true
-      collapsed: true
-      frame: vehicle
-      color: "#00ff00"
-      draw_style: arrows
-      position_tolerance: 0
-      buffer_size: 1
-      static_arrow_sizes: false
-      arrow_size: 25
-  - type: mapviz_plugins/marker
-    name: new display
-    config:
-      visible: true
-      collapsed: true
-      topic: /visual_rviz
-  - type: mapviz_plugins/pose
-    name: new display
-    config:
-      visible: true
-      collapsed: true
-      topic: /Psi_d
-      color: "#a40000"
-      draw_style: arrows
-      position_tolerance: 0
-      buffer_size: 1
-      show_laps: false
-      static_arrow_sizes: false
-      arrow_size: 25
-  - type: mapviz_plugins/laserscan
-    name: new display
-    config:
-      visible: true
-      collapsed: true
-      topic: /laserscan
-      size: 3
-      buffer_size: 1
-      alpha: 1
-      color_transformer: Range
-      min_color: "#ffffff"
-      max_color: "#000000"
-      value_min: 0
-      value_max: 100
-      use_rainbow: false
-  - type: mapviz_plugins/point_click_publisher
-    name: new display
-    config:
-      visible: true
-      collapsed: true
-      topic: clicked_point
-      output_frame: /wgs84
+      buffer_size: 100
