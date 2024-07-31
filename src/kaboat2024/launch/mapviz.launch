@@ -1,4 +1,5 @@
 <launch>
+    <node pkg="kaboat2024" type="mapvizPosPublish.py" name="PosPublish"/>
     <node pkg="mapviz" type="mapviz" name="mapviz">
         <param name="config" value="$(find kaboat2024)/kaboat_mapviz.mvc"/>    
     </node>
