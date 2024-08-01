@@ -12,9 +12,13 @@ class WaypointNavigator:
         # Initialize ROS node
         rospy.init_node('waypoint_navigator', anonymous=True)
 
-        # Subscribers
-        self.utm_sub = Subscriber('/GPS', Float64MultiArray)
-        self.imu_sub = Subscriber('/IMU', Float32)
+        # Subscribers in Unity
+        # self.utm_sub = Subscriber('/GPS', Float64MultiArray)
+        # self.imu_sub = Subscriber('/IMU', Float32)
+        # Subscribers in Real
+        self.utm_sub = Subscriber('/KABOAT/UTM', Float64MultiArray)
+        self.imu_sub = Subscriber('/KABOAT/Heading', Float32)
+
         self.waypoint_sub = rospy.Subscriber('/Waypoint', PointStamped, self.waypointCallback)
 
         # Publishers
