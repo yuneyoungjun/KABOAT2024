@@ -6,7 +6,6 @@ from geometry_msgs.msg import PoseStamped
 from sensor_msgs.msg import NavSatFix
 import tf
 import math
-import utm  # UTM 변환을 위한 패키지
 
 # 기준 GPS 위치
 ref_gps_x = 36.368706  # 기준 위도
@@ -19,28 +18,18 @@ quaternion = (0.0, 0.0, 0.0, 1.0)
 def gps_callback(gps_msg):
     global gps_x, gps_y
     # GPS 데이터에서 위치 정보를 가져옵니다.
-    gps_x = gps_msg.latitude  # 위도를 y로 사용
-    gps_y = gps_msg.longitude   # 경도를 x로 사용
+    gps_x = gps_msg.longitude  # 위도를 y로 사용
+    gps_y = gps_msg.latitude   # 경도를 x로 사용
 
 def heading_callback(msg):
     global quaternion
     # PoseStamped 메시지 생성
     pose = PoseStamped()
-    pose.header.frame_id = "map"  # GPS 데이터의 기준 프레임
+    pose.header.frame_id = "/wgs84"  # GPS 데이터의 기준 프레임
     pose.header.stamp = rospy.Time.now()
-
-    # 기준 GPS 좌표를 UTM으로 변환
-    base_utm = utm.from_latlon(ref_gps_x, ref_gps_y)
-    # 현재 GPS 좌표를 UTM으로 변환
-    current_utm = utm.from_latlon(gps_x, gps_y)
-
-    # UTM 좌표 차이를 계산
-    delta_x = current_utm[0] - base_utm[0]  # UTM X 차이
-    delta_y = current_utm[1] - base_utm[1]  # UTM Y 차이
-
     # PoseStamped 메시지의 위치 설정
-    pose.pose.position.x = delta_x + 6.9 # 기준 GPS로부터의 X 거리
-    pose.pose.position.y = delta_y + 1.18 # 기준 GPS로부터의 Y 거리
+    pose.pose.position.x = gps_x # 기준 GPS로부터의 X 거리
+    pose.pose.position.y = gps_y # 기준 GPS로부터의 Y 거리
     pose.pose.position.z = 0.0  # 필요에 따라 조정
 
     # Heading을 도(degree)에서 라디안으로 변환
@@ -55,7 +44,6 @@ def heading_callback(msg):
     pose.pose.orientation.z = quaternion[2]
     pose.pose.orientation.w = quaternion[3]
 
-    print(quaternion)
     # PoseStamped 메시지를 publish
     pose_pub.publish(pose)
 
@@ -69,19 +57,4 @@ if __name__ == '__main__':
 
     # PoseStamped 메시지를 publish 하기 위한 퍼블리셔
     pose_pub = rospy.Publisher('/pose_stamped', PoseStamped, queue_size=10)
-
-    # TF 변환 브로드캐스터 생성
-    tf_broadcaster = tf.TransformBroadcaster()
-
-    # 주기적으로 TF 변환을 publish
-    rate = rospy.Rate(10)  # 10 Hz
-    while not rospy.is_shutdown():
-        # TF 변환을 publish
-        tf_broadcaster.sendTransform(
-            translation=(gps_x, gps_y, 0.0),
-            rotation=(0, 0, 0, 0),
-            time=rospy.Time.now(),
-            child="vehicle",  # 차량의 프레임 이름
-            parent="map"      # 기준 프레임 이름
-        )
-        rate.sleep()
+    rospy.spin()
