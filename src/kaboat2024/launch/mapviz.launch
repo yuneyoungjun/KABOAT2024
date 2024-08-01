@@ -35,4 +35,5 @@
         <remap from="fix" to="/RTK_GPS/smc_2000/fix"/>
     </node>
     <node pkg="kaboat2024" type="MapvizPosPublish.py" name="PosPublish"/>
+    <node pkg="kaboat2024" type="ClickedPosPublish.py" name="ClickPublish"/>
 </launch>
