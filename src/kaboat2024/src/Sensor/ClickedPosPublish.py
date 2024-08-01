@@ -14,12 +14,12 @@ def callback(data):
     marker.pose.position.x = data.point.x  # 포인트 x 좌표
     marker.pose.position.y = data.point.y  # 포인트 y 좌표
     marker.pose.position.z = 0  # z 좌표 (0으로 설정)
-    marker.scale.x = 1000 # 크기 설정
-    marker.scale.y = 1000
-    marker.scale.z = 1000
-    marker.color.a = 1.0  # 완전 불투명
-    marker.color.r = 1.0  # 빨간색
-    marker.color.g = 0.0
+    marker.scale.x = 2 # 크기 설정
+    marker.scale.y = 2
+    marker.scale.z = 2
+    marker.color.a = 0.8  # 완전 불투명
+    marker.color.r = 0.0 # 빨간색
+    marker.color.g = 0.8
     marker.color.b = 0.0
 
     # Marker를 MarkerArray에 추가
