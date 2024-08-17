@@ -17,7 +17,7 @@
     <!-- Run pointcloud_to_laser node -->
     <node pkg="pointcloud_to_laserscan" type="pointcloud_to_laserscan_node" name="pointcloud_to_laserscan">
         <remap from="cloud_in" to="/voxel_grid/output"/>
-        <remap from="scan" to="/laserscan"/>
+        <remap from="scan" to="/scan"/>
         <rosparam>
             angle_max: 3.14159
             angle_min: -3.14159
