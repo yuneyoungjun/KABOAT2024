@@ -13,6 +13,7 @@ import message_filters
 distances = []
 angles = []
 waypoints = []  # Waypoint 데이터를 저장할 리스트
+waypoint_angle = 0  # Waypoint 각도를 저장할 리스트
 threshold = 100.0  # 특정 거리 임계값 설정 (예: 100.0 센티미터)
 
 gps_position = []
@@ -20,7 +21,7 @@ heading_angle = 0
 
 # 시각화 함수
 def update(frame):
-    global distances, angles, waypoints
+    global distances, angles, waypoints, waypoint_angle
 
     ax.clear()
     ax.set_title('Distance Data in Polar Coordinates', va='bottom')
@@ -49,6 +50,9 @@ def update(frame):
             distance = np.sqrt(np.power(wx, 2) + np.power(wy, 2))
             ax.text(angle, distance, str(idx + 1), color='black', fontsize=8, ha='center', va='bottom')
 
+    # Waypoint 각도 표시
+    ax.plot([0, np.radians(waypoint_angle)], [0, 15], color='green', label='Waypoint Angle')  # 각도는 고정된 거리에서 표시
+
     ax.grid(True)
     ax.legend()
 
@@ -71,6 +75,10 @@ def waypoint_callback(data):
     else:
         waypoints.append([data.point.x, data.point.y])
 
+def waypoint_angle_callback(data):
+    global waypoint_angle
+    waypoint_angle = data.data # 각도 데이터 추가
+
 def gps_callback(data):
     global gps_position
     gps_position = data.data  # GPS 위치 업데이트 (예: [x, y])
@@ -91,8 +99,9 @@ def listener(is_simulator=False):
     gps_sub = message_filters.Subscriber("KABOAT/UTM", Float64MultiArray)
     imu_sub = message_filters.Subscriber("KABOAT/Heading", Float32)
 
-    # Waypoint 토픽 구독
+    # Waypoint 및 Waypoint Angle 토픽 구독
     rospy.Subscriber("/Waypoint", PointStamped, waypoint_callback)
+    rospy.Subscriber("/waypoint_angle", Float32, waypoint_angle_callback)
 
     ts = message_filters.ApproximateTimeSynchronizer([gps_sub, imu_sub], queue_size=10, slop=0.1, allow_headerless=True)
     ts.registerCallback(lambda gps_data, imu_data: (gps_callback(gps_data), imu_callback(imu_data)))
