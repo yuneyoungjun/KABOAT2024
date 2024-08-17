@@ -16,8 +16,10 @@ class WaypointNavigator:
         # self.utm_sub = Subscriber('/GPS', Float64MultiArray)
         # self.imu_sub = Subscriber('/IMU', Float32)
         # Subscribers in Real
-        self.utm_sub = Subscriber('/KABOAT/UTM', Float64MultiArray)
-        self.imu_sub = Subscriber('/KABOAT/Heading', Float32)
+        # self.utm_sub = Subscriber('/KABOAT/UTM', Float64MultiArray)
+        # self.imu_sub = Subscriber('/KABOAT/Heading', Float32)
+        self.utm_sub = Subscriber('/GPS', Float64MultiArray)
+        self.imu_sub = Subscriber('/IMU', Float32)
 
         self.waypoint_sub = rospy.Subscriber('/Waypoint', PointStamped, self.waypointCallback)
 
@@ -85,28 +87,60 @@ class WaypointNavigator:
         return Float32(data=relative_angle)
 
     def publish_control_values(self, relative_angle, imu_angle):
+        global timepast, psi_error_past, psi_error_sum, u_error_past, u_error_sum, k
+
+        dt = rospy.get_time() - self.timepast
+
         control_values = Int16MultiArray()
         control_values.data = [0, 0, 0, 0, 0, 0]  # 초기값 설정
 
+        psi_error = relative_angle
+        u_error = 150
 
-        ##################################### Change #####################################
-        # Calculate control values based on relative angle
-        if relative_angle > 0:  # 오른쪽으로 회전
-            control_values.data[3] = min(500, control_values.data[0] + int(relative_angle * 10))  # left
-            control_values.data[4] = max(-500, control_values.data[1] - int(relative_angle * 10))  # right
-            # control_values.data[2] = min(500, control_values.data[2] + 50)  # front
-        elif relative_angle < 0:  # 왼쪽으로 회전
-            control_values.data[3] = max(-500, control_values.data[0] - int(-relative_angle * 10))  # left
-            control_values.data[4] = min(500, control_values.data[1] + int(-relative_angle * 10))  # right
-            # control_values.data[2] = max(-500, control_values.data[2] - 50)  # front
+        ##### Parameter #####
+        u_p_gain = 1.0
+        u_d_gain = 0.0
+        u_i_gain = 0.0
+        psi_p_gain = 2.5
+        psi_d_gain = 0.5
+        psi_i_gain = 0.0
 
-        control_values.data[3] = min(500, control_values.data[3] + 200)
-        control_values.data[4] = min(500, control_values.data[4] + 200)
-        ##################################################################################
+        maxThrust = 250
+        minThrust = -250
+
+        ##########
+        rospy.loginfo("Error of psi : %f [degree]" , psi_error)
+
+        psi_error_dot = (psi_error - self.psi_error_past) / dt
+        self.psi_error_past = psi_error
+        self.psi_error_sum += psi_error * dt
+
+        tau_N = psi_p_gain * psi_error + psi_d_gain * psi_error_dot + psi_i_gain * self.psi_error_sum
         
-        # Publish control values
-        print(relative_angle,control_values.data)
+        u_error_dot = (u_error - self.u_error_past) / dt
+        self.u_error_past = u_error
+        self.u_error_sum += u_error * dt
+
+        tau_X = u_p_gain * u_error +  u_d_gain * u_error_dot + u_i_gain * self.u_error_sum
+
+
+        Lpwm =  (tau_X * -1.0 + tau_N * -0.5)
+        Rpwm =  (tau_X * -1.0 + tau_N * 0.5)
+        LRpwm =  (tau_X * 0.0 + tau_N * 1.0)
+
+        Lpwm = int(min(max(Lpwm, minThrust), maxThrust))
+        Rpwm = int(min(max(Rpwm, minThrust), maxThrust))
+        LRpwm = int(min(max(LRpwm, minThrust), maxThrust))
+
+        control_values.data[3] = Lpwm
+        control_values.data[4] = Rpwm
+        control_values.data[5] = -LRpwm
+        rospy.loginfo("Motor speed(L) : %f " , Lpwm)    
+        rospy.loginfo("Motor speed(R) : %f " , Rpwm)
+        rospy.loginfo("Motor speed(LR) : %f " , LRpwm)
+        rospy.loginfo(control_values)
         self.control_pub.publish(control_values)
+        self.timepast = rospy.get_time()
 
     def publish_stop(self):
         self.control_pub.publish(Int16MultiArray(data = [0, 0, 0, 0, 0, 0]))

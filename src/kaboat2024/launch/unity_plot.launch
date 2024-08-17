@@ -1,0 +1,4 @@
+<launch>
+    <node pkg="kaboat2024" type="2024_unity_path.py" name="unity_path" output="screen"/>
+    <node pkg="kaboat2024" type="unity_plot.py" name="unity_plot" output="screen"/>
+</launch>

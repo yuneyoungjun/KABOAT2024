@@ -1,0 +1,4 @@
+<launch>
+    <node pkg="kaboat2024" type="lidar_pub.py" name="lidar_pub" output="screen"/>
+    <node pkg="kaboat2024" type="SensorFusion.py" name="SensorFusion" output="screen"/>
+</launch>

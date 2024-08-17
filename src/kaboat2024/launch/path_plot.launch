@@ -1,0 +1,4 @@
+<launch>
+    <node pkg="kaboat2024" type="Path_main.py" name="Path_main" output="screen"/>
+    <node pkg="kaboat2024" type="Lidar_real.py" name="Lidar_real" output="screen"/>
+</launch>
