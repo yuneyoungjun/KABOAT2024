@@ -1,30 +1,53 @@
-# -*- coding:utf-8 -*-
 #!/usr/bin/env python3
 
 import rospy
-import time
-import math
-from std_msgs.msg import Int16MultiArray
+from std_msgs.msg import Float32, Int16MultiArray
 
-rospy.init_node('Arduino', anonymous=False)
-pub = rospy.Publisher('control', Int16MultiArray, queue_size=100)
-data = Int16MultiArray()
+class MotorController:
+    def __init__(self):
+        rospy.init_node('motor_controller', anonymous=True)
 
-#                                   Data Info
-# [servo_left, servo_right, servo_front, thrust_left, thrust_right, thrust_front]
-# servo range : -45deg to 45deg
-# thrust range : -500 to 500
+        # PWM 제어를 위한 퍼블리셔
+        self.control_pub = rospy.Publisher('/control', Int16MultiArray, queue_size=10)
 
-i = 0
-while(1):
-    a = int(300 * math.sin(i))
-    b = int(300 * math.cos(i))
+        # 희망 Heading 값을 구독
+        rospy.Subscriber('/desired_heading', Float32, self.heading_callback)
 
-    i += 0.1
+    def heading_callback(self, data):
+        relative_angle = data.data  # 희망 Heading 값
+        control_values = Int16MultiArray()
+        control_values.data = [0, 0, 0, 0, 0, 0]  # 초기값 설정
 
-    if(i > 5):
-        a=b=0
-    data.data = [0, 0, 0, 0, 0, a]
-    print(data.data)
-    pub.publish(data)
-    time.sleep(0.1)
+        # 각도 차이를 -180 ~ 180 범위로 조정
+        if relative_angle > 180:
+            relative_angle -= 360
+        elif relative_angle < -180:
+            relative_angle += 360
+
+        ##################################### Change #####################################
+        # Calculate control values based on relative angle
+        if relative_angle > 0:  # 오른쪽으로 회전
+            control_values.data[3] = min(500, control_values.data[0] + int(relative_angle * 10))  # left
+            control_values.data[4] = max(-500, control_values.data[1] - int(relative_angle * 10))  # right
+        elif relative_angle < 0:  # 왼쪽으로 회전
+            control_values.data[3] = max(-500, control_values.data[0] - int(-relative_angle * 10))  # left
+            control_values.data[4] = min(500, control_values.data[1] + int(-relative_angle * 10))  # right
+
+        # 모터 속도 증가
+        control_values.data[3] = min(500, control_values.data[3] + 120)
+        control_values.data[4] = min(500, control_values.data[4] + 120)
+        ##################################################################################
+
+        # PWM 값 퍼블리시
+        print(relative_angle, control_values.data)
+        self.control_pub.publish(control_values)
+
+    def run(self):
+        rospy.spin()
+
+if __name__ == '__main__':
+    try:
+        controller = MotorController()
+        controller.run()
+    except rospy.ROSInterruptException:
+        pass
