@@ -2,17 +2,21 @@
 
 import rospy
 from sensor_msgs.msg import LaserScan
-from std_msgs.msg import Float64MultiArray
-from geometry_msgs.msg import PointStamped  # PointStamped 메시지 임포트
+from std_msgs.msg import Float64MultiArray, Float32
+from geometry_msgs.msg import PointStamped
 import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib.animation import FuncAnimation
+import message_filters
 
 # 초기 거리 데이터 설정
 distances = []
 angles = []
 waypoints = []  # Waypoint 데이터를 저장할 리스트
 threshold = 100.0  # 특정 거리 임계값 설정 (예: 100.0 센티미터)
+
+gps_position = []
+heading_angle = 0
 
 # 시각화 함수
 def update(frame):
@@ -30,9 +34,20 @@ def update(frame):
 
     # Waypoint 데이터 표시
     if waypoints:
-        waypoint_x = [point[0] for point in waypoints]
-        waypoint_y = [point[1] for point in waypoints]
-        ax.scatter(np.arctan2(waypoint_y, waypoint_x), np.sqrt(np.square(waypoint_x) + np.square(waypoint_y)), color='red', label='Waypoints')  # Waypoint 점으로 표시
+        waypoint_x = [(point[0]-gps_position[0]) for point in waypoints]
+        waypoint_y = [(point[1]-gps_position[1]) for point in waypoints]
+        print(waypoint_x, waypoint_y)
+
+        # Waypoint 점으로 표시
+        ax.scatter(np.radians(np.arctan2(waypoint_x, waypoint_y) * 180 / np.pi - heading_angle), 
+                    np.sqrt(np.power(waypoint_x, 2) + np.power(waypoint_y, 2)), 
+                    color='red', label='Waypoints')  
+
+        # 각 Waypoint에 인덱스 번호 텍스트 추가
+        for idx, (wx, wy) in enumerate(zip(waypoint_x, waypoint_y)):
+            angle = np.radians(np.arctan2(wx, wy) * 180 / np.pi - heading_angle)
+            distance = np.sqrt(np.power(wx, 2) + np.power(wy, 2))
+            ax.text(angle, distance, str(idx + 1), color='black', fontsize=8, ha='center', va='bottom')
 
     ax.grid(True)
     ax.legend()
@@ -56,6 +71,14 @@ def waypoint_callback(data):
     else:
         waypoints.append([data.point.x, data.point.y])
 
+def gps_callback(data):
+    global gps_position
+    gps_position = data.data  # GPS 위치 업데이트 (예: [x, y])
+
+def imu_callback(data):
+    global heading_angle
+    heading_angle = data.data  # 방위각 업데이트
+
 def listener(is_simulator=False):
     rospy.init_node('distance_visualizer', anonymous=True)
 
@@ -65,8 +88,14 @@ def listener(is_simulator=False):
     else:
         rospy.Subscriber("scan", LaserScan, laser_scan_callback)
 
+    gps_sub = message_filters.Subscriber("KABOAT/UTM", Float64MultiArray)
+    imu_sub = message_filters.Subscriber("KABOAT/Heading", Float32)
+
     # Waypoint 토픽 구독
     rospy.Subscriber("/Waypoint", PointStamped, waypoint_callback)
+
+    ts = message_filters.ApproximateTimeSynchronizer([gps_sub, imu_sub], queue_size=10, slop=0.1, allow_headerless=True)
+    ts.registerCallback(lambda gps_data, imu_data: (gps_callback(gps_data), imu_callback(imu_data)))
 
     # Matplotlib 설정
     global fig, ax
