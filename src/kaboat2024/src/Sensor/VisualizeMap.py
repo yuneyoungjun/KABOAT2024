@@ -37,7 +37,6 @@ def update(frame):
     if waypoints:
         waypoint_x = [(point[0]-gps_position[0]) for point in waypoints]
         waypoint_y = [(point[1]-gps_position[1]) for point in waypoints]
-        print(waypoint_x, waypoint_y)
 
         # Waypoint 점으로 표시
         ax.scatter(np.radians(np.arctan2(waypoint_x, waypoint_y) * 180 / np.pi - heading_angle), 
