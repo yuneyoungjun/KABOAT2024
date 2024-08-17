@@ -4,7 +4,7 @@
 import rospy
 from modules.Waypoint import WaypointNavigator
 
-#########################
+#########################aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaass
 if __name__ == '__main__':
     try:
         waypoint_navigator = WaypointNavigator()
