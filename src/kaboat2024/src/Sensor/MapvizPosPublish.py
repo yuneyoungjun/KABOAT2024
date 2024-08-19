@@ -7,10 +7,6 @@ from sensor_msgs.msg import NavSatFix
 import tf
 import math
 
-# 기준 GPS 위치
-ref_gps_x = 36.368706  # 기준 위도
-ref_gps_y = 127.345411  # 기준 경도
-
 gps_x = 0.0
 gps_y = 0.0
 quaternion = (0.0, 0.0, 0.0, 1.0)
@@ -51,7 +47,8 @@ if __name__ == '__main__':
     rospy.init_node('heading_to_pose_publisher')
 
     # GPS 데이터 수신을 위한 구독자
-    rospy.Subscriber('/RTK_GPS/smc_2000/fix', NavSatFix, gps_callback)
+    # rospy.Subscriber('/RTK_GPS/smc_2000/fix', NavSatFix, gps_callback)
+    rospy.Subscriber('/ublox_gps/fix', NavSatFix, gps_callback)
     # 헤딩 데이터 수신을 위한 구독자
     rospy.Subscriber('/KABOAT/Heading', Float32, heading_callback)
 

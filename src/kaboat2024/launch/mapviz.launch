@@ -6,7 +6,7 @@
 
     <node pkg="swri_transform_util" type="initialize_origin.py" name="initialize_origin" >
         <param name="local_xy_frame" value="/map"/>
-        <param name="local_xy_origin" value="cnu"/>
+        <param name="local_xy_origin" value="shii"/>
         <rosparam param="local_xy_origins">
         [{ name: cnu,
             latitude: 36.368706,
@@ -34,6 +34,6 @@
         </rosparam>
         <remap from="fix" to="/RTK_GPS/smc_2000/fix"/>
     </node>
-    <node pkg="kaboat2024" type="MapvizPosPublish.py" name="PosPublish"/>
-    <node pkg="kaboat2024" type="ClickedPosPublish.py" name="ClickPublish"/>
+    <node pkg="kaboat2024" type="MapvizPosPublish.py" name="PosPublish" output="screen"/>
+    <node pkg="kaboat2024" type="ClickedPosPublish.py" name="ClickPublish" output="screen"/>
 </launch>
