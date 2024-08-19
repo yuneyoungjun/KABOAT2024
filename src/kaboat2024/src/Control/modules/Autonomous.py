@@ -132,6 +132,7 @@ def goal_check():
 
     for i in range(0, 90 - theta):
         angle = normalize_angle(int(Goal_Psi) + 90 - i)
+        r = autonomousController.BOAT_WIDTH /(2 *np.cos(np.radians(i)))
         check_ld[angle] = r
         if(distances[angle] == 0):
             continue
