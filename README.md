@@ -44,3 +44,12 @@ rosbag record -a
 rosbag play {bag 파일 위치}
 ```
 ROSBAG을 사용하여 실시간 데이터를 저장하여 세팅하는 데 사용
+
+
+<h3>설치 패키지</h3>
+
+```
+src/livox_ros_driver2/
+src/Livox-SDK2/
+src/mapviz/
+```
