@@ -6,7 +6,7 @@
 
     <node pkg="swri_transform_util" type="initialize_origin.py" name="initialize_origin" >
         <param name="local_xy_frame" value="/map"/>
-        <param name="local_xy_origin" value="shii"/>
+        <param name="local_xy_origin" value="cnu"/>
         <rosparam param="local_xy_origins">
         [{ name: cnu,
             latitude: 36.368706,

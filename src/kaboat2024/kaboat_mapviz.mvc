@@ -9,9 +9,9 @@ show_status_bar: true
 show_capture_tools: true
 window_width: 1848
 window_height: 1016
-view_scale: 0.489277
-offset_x: -120.2796
-offset_y: 475.568
+view_scale: 0.3186308
+offset_x: -124.9067
+offset_y: 385.0334
 use_latest_transforms: true
 background: "#a0a0a4"
 displays:
@@ -54,11 +54,11 @@ displays:
     config:
       visible: true
       collapsed: false
-      topic: /RTK_GPS/smc_2000/fix
+      topic: /ublox_gps/fix
       color: "#00ff00"
       draw_style: points
       position_tolerance: 0
-      buffer_size: 100
+      buffer_size: 1
   - type: mapviz_plugins/point_click_publisher
     name: new display
     config:
