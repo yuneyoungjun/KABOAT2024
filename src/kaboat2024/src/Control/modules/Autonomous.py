@@ -117,11 +117,12 @@ def goal_check():
     isAble = True
 
     for i in range(0, 90 - theta):
-        check_ld[normalize_angle(int(Goal_Psi) - 90 + i)] = autonomousController.BOAT_WIDTH /(2 *np.cos(np.radians(i)))
-        # check_ld[normalize_angle(int(Goal_Psi) - 90 + i)] = distances[normalize_angle(int(Goal_Psi) - 90 + i)]
-        if(distances[normalize_angle(int(Goal_Psi) - 90 + i)] == 0):
+        angle = normalize_angle(int(Goal_Psi) - 90 + i)
+        r = autonomousController.BOAT_WIDTH /(2 *np.cos(np.radians(i)))
+        check_ld[angle] = r
+        if(distances[angle] == 0):
             continue
-        if(autonomousController.BOAT_WIDTH /(2 *np.cos(np.radians(i))) > distances[normalize_angle(int(Goal_Psi) - 90 + i)]):
+        if(r > distances[angle]):
             isAble = False
 
     for i in range(-theta, theta + 1):
@@ -130,11 +131,11 @@ def goal_check():
             isAble = False
 
     for i in range(0, 90 - theta):
-        check_ld[normalize_angle(int(Goal_Psi) + 90 - i)] = autonomousController.BOAT_WIDTH /(2 *np.cos(np.radians(i)))
-        # check_ld[normalize_angle(int(Goal_Psi) + 90 - i)] = distances[normalize_angle(int(Goal_Psi) + 90 - i)]
-        if(distances[normalize_angle(int(Goal_Psi) + 90 - i)] == 0):
+        angle = normalize_angle(int(Goal_Psi) + 90 - i)
+        check_ld[angle] = r
+        if(distances[angle] == 0):
             continue
-        if(autonomousController.BOAT_WIDTH /(2 *np.cos(np.radians(i))) > distances[normalize_angle(int(Goal_Psi) + 90 - i)]):
+        if(r > distances[angle]):
             isAble = False
     ax.fill(angles, check_ld, color=[0, 0, 1, 0.2])
 
