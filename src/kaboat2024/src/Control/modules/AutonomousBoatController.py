@@ -47,7 +47,7 @@ class AutonomousBoatController:
         safe_zone = self.calculate_safe_zone(ld)
         theta_list = []
 
-        for i in range(-180, 181):
+        for i in range(-180, 180):
             if safe_zone[i] > 0:
                 cost = (self.GAIN_PSI * self.cost_func_angle(i - goal_psi) + 
                         self.GAIN_DISTANCE * self.cost_func_distance(ld[i]))

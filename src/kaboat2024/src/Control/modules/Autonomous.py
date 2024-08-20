@@ -46,10 +46,11 @@ def update(frame):
 
     if(len(distances) == 0):
         return
+
     safe_ld = autonomousController.calculate_safe_zone(distances)
     cost_function = autonomousController.calculate_optimal_psi_d(safe_ld, int(Goal_Psi))
     desired_heading = sorted(cost_function, key=lambda x: x[1])[0][0]
-
+    
     #### 목적지 까지 장애물이 없을 때 ####
     if(goal_check()):
         desired_heading = Goal_Psi
@@ -62,9 +63,7 @@ def update(frame):
 
 
     # desired_heading을 Float32 형태로 publish
-    desired_heading_msg = Float32()
-    desired_heading_msg.data = desired_heading
-    desired_heading_publisher.publish(desired_heading_msg)  # 퍼블리셔를 통해 데이터 전송
+    desired_heading_publisher.publish(Float32(data = desired_heading))  # 퍼블리셔를 통해 데이터 전송
 
     cost_function_values = np.transpose(cost_function)
 
