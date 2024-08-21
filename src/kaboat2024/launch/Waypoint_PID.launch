@@ -1,0 +1,4 @@
+<launch>
+    <node pkg="kaboat2024" type="Waypoint.py" name="Waypoint" output="screen"/>
+    <node pkg="kaboat2024" type="PID.py" name="PID" output="screen"/>
+</launch>

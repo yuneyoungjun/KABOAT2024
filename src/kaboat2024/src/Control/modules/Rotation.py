@@ -7,7 +7,6 @@ import numpy as np
 from std_msgs.msg import Float32, Float64MultiArray, Int16MultiArray
 from geometry_msgs.msg import PointStamped
 from message_filters import ApproximateTimeSynchronizer, Subscriber
-import math
 class WaypointNavigator:
     def __init__(self):
         # Initialize ROS node
@@ -39,22 +38,24 @@ class WaypointNavigator:
         self.u_error_sum=0
         # List of waypoints
         self.waypoints = []  # Fill in your waypoints
-        self.current_waypoint_index = 0
+        self.current_waypoint_index = -1
 
     def waypointCallback(self, wp):
         if(wp.point.z == -1):
             self.waypoints = []
         else:
             self.waypoints.append([wp.point.x, wp.point.y])
+        print(self.waypoints)
+        self.current_waypoint_index += 1
 
     def callback(self, utm_msg, imu_msg):
-        global utm_coords,current_waypoint
         # Get current UTM coordinates
         utm_coords = np.array(utm_msg.data)
         # Get current orientation from IMU (assuming yaw angle in degrees)
         current_yaw = np.radians(imu_msg.data)
         if(len(self.waypoints) == 0):
-            self.current_waypoint_index = 0
+            # self.current_waypoint_index = 0
+            self.current_waypoint_index = -1
             rospy.loginfo("Waypoint Empty")
             self.publish_stop()
             return
@@ -75,8 +76,8 @@ class WaypointNavigator:
         self.publish_control_values(angle_to_waypoint.data, imu_msg.data)
 
         # Check if waypoint is reached (threshold distance)
-        if np.linalg.norm(current_waypoint - utm_coords) < 3.0:  # 3 meter threshold
-            self.current_waypoint_index += 1
+        # if np.linalg.norm(current_waypoint - utm_coords) < 3.0:  # 3 meter threshold
+        #     self.current_waypoint_index += 1
 
     def calculate_angle(self, current_pos, waypoint, current_yaw):
         # Calculate the angle from current position to waypoint
@@ -108,11 +109,11 @@ class WaypointNavigator:
         u_d_gain = 0.0
         u_i_gain = 0.0
         psi_p_gain = 50
-        psi_d_gain = 0.5
+        psi_d_gain = 10
         psi_i_gain = 0.0
 
-        maxThrust = 1000
-        minThrust = -1000
+        maxThrust = 500
+        minThrust = -500
 
         ##########
         # rospy.loginfo("Error of psi : %f [degree]" , psi_error)
@@ -127,21 +128,19 @@ class WaypointNavigator:
         self.u_error_past = u_error
         self.u_error_sum += u_error * dt
 
-        tau_X_dist= min(4*sum(np.power(current_waypoint-utm_coords, 2)),300)
-        tau_X_psi=200/((abs(psi_error))+1)
-        tau_X=tau_X_dist+tau_X_psi
-        tau_X=min(tau_X,500)
+        tau_X = u_p_gain * u_error +  u_d_gain * u_error_dot + u_i_gain * self.u_error_sum
 
-
-        Rpwm =  (tau_X * 1.0 + tau_N * -0.5)
-        Lpwm =  (tau_X * 1.0 + tau_N * 0.5)
-        LRpwm =  (tau_X * 0.0 + tau_N * -1.0)
+        # tau_X  = 200
+        # Rpwm =  (tau_X * 1.0 + tau_N * -0.5)
+        # Lpwm =  (tau_X * 1.0 + tau_N * 0.5)
+        # LRpwm =  (tau_X * 0.0 + tau_N * -1.0)
+        Rpwm =  (tau_N * -0.5)
+        Lpwm =  (tau_N * 0.5)
+        LRpwm =  (tau_N * -1.5)
 
         Lpwm = int(min(max(Lpwm, minThrust), maxThrust))
         Rpwm = int(min(max(Rpwm, minThrust), maxThrust))
         LRpwm = int(min(max(LRpwm, minThrust), maxThrust))
-        
-
 
         control_values.data[3] = Lpwm
         control_values.data[4] = Rpwm

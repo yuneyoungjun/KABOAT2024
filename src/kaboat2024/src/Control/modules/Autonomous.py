@@ -5,6 +5,7 @@ from sensor_msgs.msg import LaserScan
 from std_msgs.msg import Float64MultiArray, Float32
 from geometry_msgs.msg import PointStamped
 import numpy as np
+from math import ceil
 import matplotlib.pyplot as plt
 from matplotlib.animation import FuncAnimation
 import message_filters
@@ -24,16 +25,19 @@ Goal_Psi = 0
 Goal_Distance = 0
 cost_function_values = []  # Cost function 값을 저장할 리스트
 desired_heading_publisher = None  # 퍼블리셔를 위한 변수
+Tau_X_publisher=None
 desired_heading_history = []  # desired_heading 값을 저장할 리스트
 
+goal_threshold = 2
+def normalize_angle(angle): return (angle + 180) % 360 - 180
 # 시각화 함수
 def update(frame):
-    global distances, angles, waypoints, waypoint_angle, Goal_Psi, Goal_Distance, cost_function_values, desired_heading_publisher, desired_heading_history
+    global distances, angles, waypoints, waypoint_angle, Goal_Psi, Goal_Distance, cost_function_values, desired_heading_publisher, desired_heading_history,Tau_X_publisher
 
     # 첫 번째 subplot: 거리 데이터 시각화
     ax.clear()
     ax.set_title('Distance Data in Polar Coordinates', va='bottom')
-    ax.set_ylim(0, 20)  # Y축 범위 설정
+    ax.set_ylim(0, 30)  # Y축 범위 설정
 
     ax.set_theta_zero_location("N")  # 북쪽을 0도로 설정
     ax.set_theta_direction(-1)
@@ -41,14 +45,32 @@ def update(frame):
     # 점으로만 표시
     ax.scatter(angles, distances, color='blue', s=5)  # 라이다 데이터 점으로 표시
 
-    safe_ld = autonuomusController.calculate_safe_zone(distances)
-    cost_function = autonuomusController.calculate_optimal_psi_d(safe_ld, int(Goal_Psi))
+    if(len(distances) == 0):
+        return
+
+    safe_ld = autonomousController.calculate_safe_zone(distances)
+    cost_function = autonomousController.calculate_optimal_psi_d(safe_ld, int(Goal_Psi))
     desired_heading = sorted(cost_function, key=lambda x: x[1])[0][0]
+    
+    #### 목적지 까지 장애물이 없을 때 ####
+    if(goal_check()):
+        desired_heading = Goal_Psi
+        # desired_heading 시각화
+        ax.plot([0, np.radians(desired_heading)], [0, Goal_Distance], color='blue', label='Desired Heading')  # desired_heading 히스토리 플롯
+        Tau_X=500
+    
+    else:
+        # desired_heading 시각화
+        ax.plot([0, np.radians(desired_heading)], [0, 10], color='green', label='Desired Heading')  # desired_heading 히스토리 플롯
+        Tau_X=autonomousController.Tau_X_calculate(distances,desired_heading)
+
 
     # desired_heading을 Float32 형태로 publish
-    desired_heading_msg = Float32()
-    desired_heading_msg.data = desired_heading
-    desired_heading_publisher.publish(desired_heading_msg)  # 퍼블리셔를 통해 데이터 전송
+    desired_heading_publisher.publish(Float32(data = desired_heading))  # 퍼블리셔를 통해 데이터 전송
+
+
+
+    Tau_X_publisher.publish(Float32(data = Tau_X))
 
     cost_function_values = np.transpose(cost_function)
 
@@ -59,8 +81,12 @@ def update(frame):
         waypoint_x = [(point[0] - gps_position[0]) for point in waypoints]
         waypoint_y = [(point[1] - gps_position[1]) for point in waypoints]
 
-        Goal_Psi = np.arctan2(waypoint_x[-1], waypoint_y[-1]) * 180 / np.pi - heading_angle
-        Goal_Distance = np.sqrt(np.power(waypoint_x[-1], 2) + np.power(waypoint_y[-1], 2))
+        if(goal_passed(waypoints[0][0], waypoints[0][1])):
+            waypoints.pop(0)
+
+
+        Goal_Psi = np.arctan2(waypoint_x[0], waypoint_y[0]) * 180 / np.pi - heading_angle
+        Goal_Distance = np.sqrt(np.power(waypoint_x[0], 2) + np.power(waypoint_y[0], 2))
 
         # Waypoint 점으로 표시
         ax.scatter(np.radians(np.arctan2(waypoint_x, waypoint_y) * 180 / np.pi - heading_angle),
@@ -76,20 +102,57 @@ def update(frame):
     # Waypoint 각도 표시
     # ax.plot([0, np.radians(waypoint_angle)], [0, 15], color='green', label='Waypoint Angle')  # 각도는 고정된 거리에서 표시
 
-    # desired_heading 시각화
-    ax.plot([0, np.radians(desired_heading)], [0, 10], color='green', label='Desired Heading')  # desired_heading 히스토리 플롯
+    
     ax.legend()
     ax.grid(True)
     ax.legend()
 
     # 두 번째 subplot: cost_function 시각화
-    ax2.clear()
-    ax2.set_title('Cost Function Over Time')
-    ax2.set_xlabel('Time (frames)')
-    ax2.set_ylabel('Cost Function Value')
-    ax2.set_ylim(0, 50)  # Y축 범위 설정
-    ax2.scatter(cost_function_values[0], cost_function_values[1], color='orange', s=2)
+    # ax2.clear()
+    # ax2.set_title('Cost Function Over Time')
+    # ax2.set_xlabel('Time (frames)')
+    # ax2.set_ylabel('Cost Function Value')
+    # ax2.set_ylim(0, 50)  # Y축 범위 설정
+    # ax2.scatter(cost_function_values[0], cost_function_values[1], color='orange', s=2)
 
+def goal_check():
+    l = Goal_Distance
+    theta = ceil(np.degrees(np.arctan2(autonomousController.BOAT_WIDTH/2, l)))
+
+    check_ld = [0] * 360
+    isAble = True
+
+    for i in range(0, 90 - theta):
+        angle = normalize_angle(int(Goal_Psi) - 90 + i)
+        r = autonomousController.BOAT_WIDTH /(2 *np.cos(np.radians(i)))
+        check_ld[angle] = r
+        if(distances[angle] == 0):
+            continue
+        if(r > distances[angle]):
+            isAble = False
+
+    for i in range(-theta, theta + 1):
+        check_ld[normalize_angle(int(Goal_Psi) + i)] = l
+        if(distances[normalize_angle(int(Goal_Psi) + i)] < l):
+            isAble = False
+
+    for i in range(0, 90 - theta):
+        angle = normalize_angle(int(Goal_Psi) + 90 - i)
+        r = autonomousController.BOAT_WIDTH /(2 *np.cos(np.radians(i)))
+        check_ld[angle] = r
+        if(distances[angle] == 0):
+            continue
+        if(r > distances[angle]):
+            isAble = False
+    ax.fill(angles, check_ld, color=[0, 0, 1, 0.2])
+
+    return isAble
+
+def goal_passed(goal_x, goal_y):
+    isPassed = False
+    if((gps_position[0] - goal_x)**2 + (gps_position[1] - goal_y)**2 < goal_threshold ** 2):
+        isPassed = True
+    return isPassed
 
 def laser_scan_callback(data):
     global distances, angles
@@ -123,11 +186,12 @@ def imu_callback(data):
     heading_angle = data.data  # 방위각 업데이트
 
 def listener(is_simulator=False):
-    global desired_heading_publisher
+    global desired_heading_publisher,Tau_X_publisher
     rospy.init_node('distance_visualizer', anonymous=True)
 
     # 퍼블리셔 설정
-    desired_heading_publisher = rospy.Publisher('/desired_heading', Float32, queue_size=10)
+    desired_heading_publisher = rospy.Publisher('/heading_error', Float32, queue_size=10)
+    Tau_X_publisher = rospy.Publisher('/Tau_X', Float32, queue_size=10)
 
     # 적절한 토픽 구독
     if is_simulator:
@@ -135,8 +199,8 @@ def listener(is_simulator=False):
     else:
         rospy.Subscriber("scan", LaserScan, laser_scan_callback)
 
-    gps_sub = message_filters.Subscriber("KABOAT/UTM", Float64MultiArray)
-    imu_sub = message_filters.Subscriber("KABOAT/Heading", Float32)
+    gps_sub = message_filters.Subscriber("/GPS", Float64MultiArray)
+    imu_sub = message_filters.Subscriber("/IMU", Float32)
 
     # Waypoint 및 Waypoint Angle 토픽 구독
     rospy.Subscriber("/Waypoint", PointStamped, waypoint_callback)
@@ -148,15 +212,15 @@ def listener(is_simulator=False):
     # Matplotlib 설정
     global fig, ax, ax2
     fig = plt.figure(figsize=(10, 10))  # 전체 그림 크기 설정
-    ax = fig.add_subplot(121, projection='polar')  # 첫 번째 subplot: 극좌표계
-    ax2 = fig.add_subplot(122)  # 두 번째 subplot: 직교좌표계
+    ax = fig.add_subplot(111, projection='polar')  # 첫 번째 subplot: 극좌표계
+    # ax2 = fig.add_subplot(122)  # 두 번째 subplot: 직교좌표계
     # 애니메이션 설정
     ani = FuncAnimation(fig, update, interval=10)  # 100ms마다 업데이트
     plt.show()
 
 if __name__ == '__main__':
     try:
-        autonuomusController = AutonomousBoatController()
+        autonomousController = AutonomousBoatController()
         listener(is_simulator=True)  # 시뮬레이터 여부에 따라 설정
     except rospy.ROSInterruptException:
         pass

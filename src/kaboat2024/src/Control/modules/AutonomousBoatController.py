@@ -27,7 +27,7 @@ class AutonomousBoatController:
         return 0.01 * x if x <= 10 else 0.1 * (x - 10)
 
     def cost_func_distance(self, x):
-        return 0 if x > 7 else 10 - 10/7 * x
+        return 1 if x > 7 else 11 - 10/7 * x
 
     def calculate_safe_zone(self, ld):
         safe_zone = [self.AVOID_RANGE] * 360
@@ -44,6 +44,45 @@ class AutonomousBoatController:
                 for j in range(i, ceil(i + np.arctan2(self.BOAT_WIDTH/2, ld[i]) * 180 / np.pi) + 1):
                     temp[j] = 0
         return temp
+
+
+
+
+    def Tau_X_calculate(self, ld,psi_error):
+        safe_zone = self.calculate_safe_zone(ld)
+        Tau_X=0
+        Tau_X_cost = 0
+        scale=0
+        num=0
+        if psi_error<0:
+            scale=int(self.AVOID_RANGE)-int(psi_error)
+            for i in range(int(psi_error), int(self.AVOID_RANGE)):
+                if safe_zone[i] > 0:
+                    cost = (self.GAIN_DISTANCE * self.cost_func_distance(ld[i]))
+                    Tau_X_cost+=cost
+                else:
+                    num+=1
+                    
+        else:
+            scale=int(self.AVOID_RANGE)+int(psi_error)
+            for i in range(int(-self.AVOID_RANGE), int(psi_error)):
+                if safe_zone[i] > 0:
+                    cost = (self.GAIN_DISTANCE * self.cost_func_distance(ld[i]))
+                    Tau_X_cost+=cost
+                else:
+                    num+=1
+        if num>(scale+1):
+            Tau_X/=(scale)/5
+        else:
+            Tau_X_cost*=8
+            Tau_X_cost/=(scale+1)
+            Tau_X=max(80,min(Tau_X_cost,500))
+            print( Tau_X)
+
+        return Tau_X
+    
+
+
 
     def calculate_optimal_psi_d(self, ld, goal_psi):
         safe_zone = self.calculate_safe_zone(ld)
@@ -97,4 +136,4 @@ if __name__ == "__main__":
     
     # 최적의 선수각 계산
     optimal_psi_d = controller.process_data(goal_x, goal_y)
-    print(f"Optimal Psi_d: {optimal_psi_d}")
+    # print(f"Optimal Psi_d: {optimal_psi_d}")
