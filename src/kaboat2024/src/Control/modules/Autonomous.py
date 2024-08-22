@@ -2,7 +2,7 @@
 
 import rospy
 from sensor_msgs.msg import LaserScan
-from std_msgs.msg import Float64MultiArray, Float32
+from std_msgs.msg import Float64MultiArray, Float32, Float32MultiArray
 from geometry_msgs.msg import PointStamped
 import numpy as np
 from math import ceil
@@ -24,14 +24,14 @@ heading_angle = 0
 Goal_Psi = 0
 Goal_Distance = 0
 cost_function_values = []  # Cost function 값을 저장할 리스트
-desired_heading_publisher = None  # 퍼블리셔를 위한 변수
-desired_heading_history = []  # desired_heading 값을 저장할 리스트
+psi_error_publisher = None  # 퍼블리셔를 위한 변수
+psi_error_history = []  # psi_error 값을 저장할 리스트
 
-goal_threshold = 2
+goal_threshold = 4 # 도착 거리
 def normalize_angle(angle): return (angle + 180) % 360 - 180
 # 시각화 함수
 def update(frame):
-    global distances, angles, waypoints, waypoint_angle, Goal_Psi, Goal_Distance, cost_function_values, desired_heading_publisher, desired_heading_history
+    global distances, angles, waypoints, waypoint_angle, Goal_Psi, Goal_Distance, cost_function_values, psi_error_publisher, psi_error_history
 
     # 첫 번째 subplot: 거리 데이터 시각화
     ax.clear()
@@ -49,21 +49,29 @@ def update(frame):
 
     safe_ld = autonomousController.calculate_safe_zone(distances)
     cost_function = autonomousController.calculate_optimal_psi_d(safe_ld, int(Goal_Psi))
-    desired_heading = sorted(cost_function, key=lambda x: x[1])[0][0]
+    psi_error = sorted(cost_function, key=lambda x: x[1])[0][0]
+    psi_error = normalize_angle(psi_error)
     
     #### 목적지 까지 장애물이 없을 때 ####
     if(goal_check()):
-        desired_heading = Goal_Psi
-        # desired_heading 시각화
-        ax.plot([0, np.radians(desired_heading)], [0, Goal_Distance], color='blue', label='Desired Heading')  # desired_heading 히스토리 플롯
+        psi_error = Goal_Psi
+        if(psi_error < 30):
+            tauX = min((Goal_Distance**3) + 120, 500)
+
+        else:
+            tauX_dist = min(4 * distances[0] ** 2, 300)
+            tauX_psi = 200/(abs(psi_error) + 1)
+            tauX = min(tauX_dist + tauX_psi, 500)
+        # psi_error 시각화
+        ax.plot([0, np.radians(psi_error)], [0, Goal_Distance], color='blue', label='Desired Heading')  # psi_error 히스토리 플롯
     
     else:
-        # desired_heading 시각화
-        ax.plot([0, np.radians(desired_heading)], [0, 10], color='green', label='Desired Heading')  # desired_heading 히스토리 플롯
+        # psi_error 시각화
+        ax.plot([0, np.radians(psi_error)], [0, 10], color='green', label='Desired Heading')  # psi_error 히스토리 플롯
 
-
-    # desired_heading을 Float32 형태로 publish
-    desired_heading_publisher.publish(Float32(data = desired_heading))  # 퍼블리셔를 통해 데이터 전송
+        tauX_dist = min(4 * Goal_Distance ** 2, 300)
+        tauX_psi = 200/(abs(psi_error) + 1)
+        tauX = min(tauX_dist + tauX_psi, 500)
 
     cost_function_values = np.transpose(cost_function)
 
@@ -79,6 +87,7 @@ def update(frame):
 
 
         Goal_Psi = np.arctan2(waypoint_x[0], waypoint_y[0]) * 180 / np.pi - heading_angle
+        Goal_Psi = normalize_angle(Goal_Psi)
         Goal_Distance = np.sqrt(np.power(waypoint_x[0], 2) + np.power(waypoint_y[0], 2))
 
         # Waypoint 점으로 표시
@@ -91,6 +100,13 @@ def update(frame):
             angle = np.radians(np.arctan2(wx, wy) * 180 / np.pi - heading_angle)
             distance = np.sqrt(np.power(wx, 2) + np.power(wy, 2))
             ax.text(angle, distance, str(idx + 1), color='black', fontsize=8, ha='center', va='bottom')
+
+        
+    # psi_error을 Float32 형태로 publish
+        psi_error_publisher.publish(Float32MultiArray(data = [psi_error, tauX, 0, 0, 0, 0]))  # 퍼블리셔를 통해 데이터 전송
+    else:
+        psi_error_publisher.publish(Float32MultiArray(data = [0, 0, 0, 0, 0, 0]))
+
 
     # Waypoint 각도 표시
     # ax.plot([0, np.radians(waypoint_angle)], [0, 15], color='green', label='Waypoint Angle')  # 각도는 고정된 거리에서 표시
@@ -179,11 +195,12 @@ def imu_callback(data):
     heading_angle = data.data  # 방위각 업데이트
 
 def listener(is_simulator=False):
-    global desired_heading_publisher
+    global psi_error_publisher
     rospy.init_node('distance_visualizer', anonymous=True)
 
     # 퍼블리셔 설정
-    desired_heading_publisher = rospy.Publisher('/desired_heading', Float32, queue_size=10)
+    psi_error_publisher = rospy.Publisher('/command', Float32MultiArray, queue_size=10)  # 주제를 '/command'로 변경
+
 
     # 적절한 토픽 구독
     if is_simulator:

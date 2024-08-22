@@ -1,46 +1,56 @@
 #!/usr/bin/env python3
 
 import rospy
-from std_msgs.msg import Float32, Int16MultiArray
+from std_msgs.msg import Float32MultiArray, Int16MultiArray
+import time
 
 class MotorController:
     def __init__(self):
         rospy.init_node('motor_controller', anonymous=True)
-
-        # PWM 제어를 위한 퍼블리셔
         self.control_pub = rospy.Publisher('/control', Int16MultiArray, queue_size=10)
+        
+        # command 배열을 구독
+        rospy.Subscriber('/command', Float32MultiArray, self.command_callback)
 
-        # 희망 Heading 값을 구독
-        rospy.Subscriber('/desired_heading', Float32, self.heading_callback)
+        self.last_error = 0.0
+        self.Kp = 30.0  # 비례 계수
+        self.Kd = 10.0  # 미분 계수
 
-    def heading_callback(self, data):
-        relative_angle = data.data  # 희망 Heading 값
-        control_values = Int16MultiArray()
-        control_values.data = [0, 0, 0, 0, 0, 0]  # 초기값 설정
+        self.last_time = time.time()
 
-        # 각도 차이를 -180 ~ 180 범위로 조정
-        if relative_angle > 180:
-            relative_angle -= 360
-        elif relative_angle < -180:
-            relative_angle += 360
+    def command_callback(self, data):
+        if len(data.data) < 2:
+            rospy.logwarn("command 배열의 길이가 충분하지 않습니다.")
+            return
+        
+        psi_error = data.data[0]
+        tauX = data.data[1]
+        tauN = self.pd_control(psi_error)
+        
+        control_values = Int16MultiArray(data=[0, 0, 0, 0, 0, 0])
+        pwmL = tauX + tauN * 0.5
+        pwmR = tauX - tauN * 0.5
+        pwmF = -tauN
 
-        ##################################### Change #####################################
-        # Calculate control values based on relative angle
-        if relative_angle > 0:  # 오른쪽으로 회전
-            control_values.data[3] = min(500, control_values.data[0] + int(relative_angle * 10))  # left
-            control_values.data[4] = max(-500, control_values.data[1] - int(relative_angle * 10))  # right
-        elif relative_angle < 0:  # 왼쪽으로 회전
-            control_values.data[3] = max(-500, control_values.data[0] - int(-relative_angle * 10))  # left
-            control_values.data[4] = min(500, control_values.data[1] + int(-relative_angle * 10))  # right
+        control_values.data[3] = max(-500, min(500, int(pwmL)))
+        control_values.data[4] = max(-500, min(500, int(pwmR)))
+        control_values.data[5] = max(-500, min(500, int(-pwmF)))
 
-        # 모터 속도 증가
-        control_values.data[3] = min(500, control_values.data[3] + 120)
-        control_values.data[4] = min(500, control_values.data[4] + 120)
-        ##################################################################################
-
-        # PWM 값 퍼블리시
-        print(relative_angle, control_values.data)
         self.control_pub.publish(control_values)
+        print(control_values)
+
+    def pd_control(self, error):
+        # 현재 시간
+        current_time = time.time()
+        dt = current_time - self.last_time  # 시간 간격 계산
+        self.last_time = current_time  # 현재 시간을 마지막 시간으로 업데이트
+        
+        # PD 제어 계산
+        derivative = (error - self.last_error) / dt if dt > 0 else 0
+        self.last_error = error
+        
+        tauN = self.Kp * error + self.Kd * derivative
+        return tauN
 
     def run(self):
         rospy.spin()
