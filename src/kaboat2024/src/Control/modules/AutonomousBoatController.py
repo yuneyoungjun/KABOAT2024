@@ -53,31 +53,21 @@ class AutonomousBoatController:
         Tau_X=0
         Tau_X_cost = 0
         scale=0
-        num=0
         if psi_error<0:
             scale=int(self.AVOID_RANGE)-int(min(psi_error,-self.AVOID_RANGE))
             for i in range(int(min(psi_error,-self.AVOID_RANGE)), int(self.AVOID_RANGE)):
-                if safe_zone[i] > 0:
                     cost = (self.GAIN_DISTANCE * self.cost_func_distance(ld[i]))
                     Tau_X_cost+=cost
-                else:
-                    num+=1
                     
         else:
             scale=int(self.AVOID_RANGE)+int(max(psi_error,self.AVOID_RANGE))
             for i in range(int(-self.AVOID_RANGE), int(max(psi_error,self.AVOID_RANGE))):
-                if safe_zone[i] > 0:
                     cost = (self.GAIN_DISTANCE * self.cost_func_distance(ld[i]))
                     Tau_X_cost+=cost
-                else:
-                    num+=1
-        if num>abs(scale)/1.4:
-            Tau_X/=(scale)/5
-        else:
-            Tau_X_cost*=8
-            Tau_X_cost/=(scale+1)
-            Tau_X=max(80,min(Tau_X_cost,500))
-            print( Tau_X)
+        Tau_X_cost*=8
+        Tau_X_cost/=(scale+1)
+        Tau_X=max(10,min(Tau_X_cost,100))
+        # print( Tau_X)
 
         return Tau_X
     

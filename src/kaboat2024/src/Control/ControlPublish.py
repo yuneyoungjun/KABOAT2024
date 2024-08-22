@@ -27,6 +27,7 @@ class MotorController:
         self.timepast=0
         dt = rospy.get_time() - self.timepast
         psi_error=psi_error_data.data
+        
         tau_X=tau_X_data.data
         control_values = Int16MultiArray()
         control_values.data = [0, 0, 0, 0, 0, 0]  # 초기값 설정
@@ -35,7 +36,7 @@ class MotorController:
 
         ##### Parameter #####
         psi_p_gain = 30
-        psi_d_gain = 0.5
+        psi_d_gain = 1
 
         maxThrust = 1000
         minThrust = -1000

@@ -33,7 +33,7 @@ def normalize_angle(angle): return (angle + 180) % 360 - 180
 # 시각화 함수
 def update(frame):
     global distances, angles, waypoints, waypoint_angle, Goal_Psi, Goal_Distance, cost_function_values, desired_heading_publisher, desired_heading_history,Tau_X_publisher
-
+    Tau_X=0
     # 첫 번째 subplot: 거리 데이터 시각화
     ax.clear()
     ax.set_title('Distance Data in Polar Coordinates', va='bottom')
@@ -57,15 +57,28 @@ def update(frame):
         desired_heading = Goal_Psi
         # desired_heading 시각화
         ax.plot([0, np.radians(desired_heading)], [0, Goal_Distance], color='blue', label='Desired Heading')  # desired_heading 히스토리 플롯
-        Tau_X=500
-    
+        try:
+            Tau_X_psi=200/((abs(desired_heading))+1)
+            Tau_X_dist=min(10*((waypoints[0][0] - gps_position[0])**2+(waypoints[0][1] - gps_position[1])**2),200)
+            Tau_X=autonomousController.Tau_X_calculate(distances,desired_heading)+Tau_X_psi+Tau_X_dist
+            print(Tau_X)
+        except:
+            pass
+        
     else:
         # desired_heading 시각화
         ax.plot([0, np.radians(desired_heading)], [0, 10], color='green', label='Desired Heading')  # desired_heading 히스토리 플롯
-        Tau_X=autonomousController.Tau_X_calculate(distances,desired_heading)
+        try:
+            Tau_X_dist=min(10*((waypoints[0][0] - gps_position[0])**2+(waypoints[0][1] - gps_position[1])**2),200)
+            Tau_X_psi=300/((abs(desired_heading))+1)
+            Tau_X=autonomousController.Tau_X_calculate(distances,desired_heading)+Tau_X_dist+Tau_X_psi
+            print(Tau_X)
+        except:
+            pass
 
 
-    # desired_heading을 Float32 형태로 publish
+    # desired_heading을 
+    # 32 형태로 publish
     desired_heading_publisher.publish(Float32(data = desired_heading))  # 퍼블리셔를 통해 데이터 전송
 
 
@@ -86,6 +99,7 @@ def update(frame):
 
 
         Goal_Psi = np.arctan2(waypoint_x[0], waypoint_y[0]) * 180 / np.pi - heading_angle
+        Goal_Psi=(Goal_Psi+180)%360-180
         Goal_Distance = np.sqrt(np.power(waypoint_x[0], 2) + np.power(waypoint_y[0], 2))
 
         # Waypoint 점으로 표시
@@ -199,8 +213,10 @@ def listener(is_simulator=False):
     else:
         rospy.Subscriber("scan", LaserScan, laser_scan_callback)
 
-    gps_sub = message_filters.Subscriber("/GPS", Float64MultiArray)
-    imu_sub = message_filters.Subscriber("/IMU", Float32)
+    # gps_sub = message_filters.Subscriber("/GPS", Float64MultiArray)
+    # imu_sub = message_filters.Subscriber("/IMU", Float32)
+    gps_sub = message_filters.Subscriber("/KABOAT/UTM", Float64MultiArray)
+    imu_sub = message_filters.Subscriber("/KABOAT/Heading", Float32)
 
     # Waypoint 및 Waypoint Angle 토픽 구독
     rospy.Subscriber("/Waypoint", PointStamped, waypoint_callback)
