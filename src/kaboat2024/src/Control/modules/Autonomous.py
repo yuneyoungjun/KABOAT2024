@@ -59,7 +59,7 @@ def update(frame):
             tauX = min((Goal_Distance**3) + 120, 500)
 
         else:
-            tauX_dist = min(4 * distances[0] ** 2, 300)
+            tauX_dist = min(3 * distances[0] ** 2, 300)
             tauX_psi = 200/(abs(psi_error) + 1)
             tauX = min(tauX_dist + tauX_psi, 500)
         # psi_error 시각화
