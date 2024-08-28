@@ -165,9 +165,11 @@ def goal_passed(goal_x, goal_y):
 
 def laser_scan_callback(data):
     global distances, angles
-    distances = np.array(data.ranges)  # 수신한 거리 데이터
+    distances = np.flip(data.ranges)  # 수신한 거리 데이터
+    distances = np.concatenate((distances[180:],distances[:180]))
     distances[distances > threshold] = 0  # 임계값 초과 시 0으로 변경
-    angles = np.linspace(data.angle_min, data.angle_max, len(distances))  # 각도 생성
+    angles = np.radians(np.arange(len(distances)))
+
 
 def simulator_laser_scan_callback(data):
     global distances, angles

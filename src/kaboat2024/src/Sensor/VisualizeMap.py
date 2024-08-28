@@ -25,7 +25,7 @@ def update(frame):
 
     ax.clear()
     ax.set_title('Distance Data in Polar Coordinates', va='bottom')
-    ax.set_ylim(0, 20)  # Y축 범위 설정
+    ax.set_ylim(0, 10)  # Y축 범위 설정
 
     ax.set_theta_zero_location("N")  # 북쪽을 0도로 설정
     ax.set_theta_direction(-1)
@@ -58,8 +58,9 @@ def update(frame):
 def laser_scan_callback(data):
     global distances, angles
     distances = np.flip(data.ranges)  # 수신한 거리 데이터
+    distances = np.concatenate((distances[180:],distances[:180]))
     distances[distances > threshold] = 0  # 임계값 초과 시 0으로 변경
-    angles = np.linspace(data.angle_min, data.angle_max, len(distances))  # 각도 생성
+    angles = np.radians(np.arange(len(distances)))
 
 def simulator_laser_scan_callback(data):
     global distances, angles
@@ -115,6 +116,6 @@ def listener(is_simulator=False):
 
 if __name__ == '__main__':
     try:
-        listener(is_simulator=True)  # 시뮬레이터 여부에 따라 설정
+        listener(is_simulator=False)  # 시뮬레이터 여부에 따라 설정
     except rospy.ROSInterruptException:
         pass
