@@ -6,6 +6,7 @@
 Servo SL, SR, SF;  // Servo Motor
 Servo TL, TR, TF;  // Thruster 
 
+int maxSaturation = 450;
 // tx12
 int sensorPin[] = {0, 8, 9, 10, 11, 12, 13};
 int channel[] = {0, 0, 0, 0, 0, 0, 0};
@@ -38,9 +39,9 @@ void servo(int l = 0, int r = 0, int f = 0) {
 
 // servo 함수에서는 원하는 PWM값을 입력 (-500 to 500)
 void thrust(int l = 0, int r = 0, int f = 0) {
-  l = constrain(l, -200, 200);
-  r = constrain(r, -200, 200);
-  f = constrain(f, -200, 200);
+  l = constrain(l, -maxSaturation, maxSaturation);
+  r = constrain(r, -maxSaturation, maxSaturation);
+  f = constrain(f, -maxSaturation, maxSaturation);
 
   TL.writeMicroseconds(1500 + l); 
   TR.writeMicroseconds(1500 + r); 
@@ -102,7 +103,7 @@ void loop() {
 
     // servo(channel[3], channel[3], -channel[3]);
   } else if(channel[5] > 100) {
-    thrust(data[3], data[4], data[5]);
+    thrust(-data[3], -data[4], data[5]);
     nh.spinOnce();
     // LED 색깔을 빨간색으로 변경
     for(int i = 0; i < NUMPIXELS; i++) {
