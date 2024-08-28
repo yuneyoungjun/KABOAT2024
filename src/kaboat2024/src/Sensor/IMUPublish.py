@@ -18,8 +18,8 @@ def getYaw(q):
 
 def callback(msg):
     data = Float32()
-    # data.data = getYaw(msg.orientation)
-    data.data = getYaw(msg.quaternion)
+    data.data = getYaw(msg.orientation)
+    # data.data = getYaw(msg.quaternion)
     print("Psi : {0:0.1f}" .format(data.data))
     pub.publish(data)
 
@@ -27,5 +27,6 @@ def callback(msg):
 if __name__ == '__main__':
     rospy.init_node("Heading_Node")
     pub = rospy.Publisher('KABOAT/Heading', Float32, queue_size=100)
-    rospy.Subscriber('/filter/quaternion', QuaternionStamped, callback)
+    # rospy.Subscriber('/filter/quaternion', QuaternionStamped, callback)
+    rospy.Subscriber('/imu/data', Imu, callback)
     rospy.spin()
