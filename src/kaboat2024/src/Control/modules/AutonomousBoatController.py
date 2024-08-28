@@ -4,8 +4,8 @@ from math import floor, ceil
 class AutonomousBoatController:
     def __init__(self):
         # Constants and Settings
-        self.BOAT_WIDTH = 1.2
-        self.AVOID_RANGE = 15
+        self.BOAT_WIDTH = 0.7
+        self.AVOID_RANGE = 2
         self.MAX_RANGE = 5
         self.GAIN_PSI = 1
         self.GAIN_DISTANCE = 8

@@ -24,7 +24,7 @@ cost_function_values = []  # Cost function 값을 저장할 리스트
 psi_error_publisher = None  # 퍼블리셔를 위한 변수
 psi_error_history = []  # psi_error 값을 저장할 리스트
 
-goal_threshold = 4 # 도착 거리
+goal_threshold = 1 # 도착 거리
 def normalize_angle(angle): return (angle + 180) % 360 - 180
 # 시각화 함수
 def update(frame):
@@ -33,7 +33,7 @@ def update(frame):
     # 첫 번째 subplot: 거리 데이터 시각화
     ax.clear()
     ax.set_title('Distance Data in Polar Coordinates', va='bottom')
-    ax.set_ylim(0, 30)  # Y축 범위 설정
+    ax.set_ylim(0, 10)  # Y축 범위 설정
 
     ax.set_theta_zero_location("N")  # 북쪽을 0도로 설정
     ax.set_theta_direction(-1)
@@ -166,6 +166,7 @@ def laser_scan_callback(data):
     distances = np.concatenate((distances[180:],distances[:180]))
     distances[distances > threshold] = 0  # 임계값 초과 시 0으로 변경
     angles = np.radians(np.arange(len(distances)))
+    Boat.scan = distances
 
 
 def simulator_laser_scan_callback(data):
@@ -225,6 +226,9 @@ def listener(is_simulator=False):
 if __name__ == '__main__':
     try:
         autonomousController = AutonomousBoatController()
-        listener(is_simulator=True)  # 시뮬레이터 여부에 따라 설정
+
+        # 시뮬레이터 여부에 따라 설정
+        listener(is_simulator=False)
+        # listener(is_simulator=True)
     except rospy.ROSInterruptException:
         pass
