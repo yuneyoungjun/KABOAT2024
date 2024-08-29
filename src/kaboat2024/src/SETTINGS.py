@@ -8,6 +8,7 @@ ref_gps_x, ref_gps_y= 127.345411, 36.368706
 
 ref_utm_x, ref_utm_y, _, _ = utm.from_latlon(ref_gps_y, ref_gps_x)
 
+isSimulator = True
 
 """
     Autonomous Parameters

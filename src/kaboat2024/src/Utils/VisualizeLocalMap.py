@@ -1,5 +1,8 @@
 #!/usr/bin/env python3
-
+import sys
+import os
+sys.path.append(os.path.dirname(os.path.abspath(os.path.dirname(__file__))))
+import SETTINGS
 import rospy
 from sensor_msgs.msg import LaserScan
 from std_msgs.msg import Float64MultiArray, Float32
@@ -87,11 +90,11 @@ def imu_callback(data):
     global heading_angle
     heading_angle = data.data  # 방위각 업데이트
 
-def listener(is_simulator=False):
+def listener():
     rospy.init_node('distance_visualizer', anonymous=True)
 
     # 적절한 토픽 구독
-    if is_simulator:
+    if SETTINGS.isSimulator:
         rospy.Subscriber("Lidar", Float64MultiArray, simulator_laser_scan_callback)
     else:
         rospy.Subscriber("scan", LaserScan, laser_scan_callback)
@@ -116,6 +119,6 @@ def listener(is_simulator=False):
 
 if __name__ == '__main__':
     try:
-        listener(is_simulator=True)  # 시뮬레이터 여부에 따라 설정
+        listener()  # 시뮬레이터 여부에 따라 설정
     except rospy.ROSInterruptException:
         pass

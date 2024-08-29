@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-
+import SETTINGS
 import rospy
 import numpy as np
 from sensor_msgs.msg import LaserScan
@@ -19,8 +19,9 @@ class CallBack:
     threshold = 100.0  # 특정 거리 임계값 설정 (예: 100.0 센티미터)
     @staticmethod
     def laser_scan_callback(data):
-        distances = np.array(data.ranges)  # 수신한 거리 데이터
-        distances[distances > CallBack.threshold] = 0  # 임계값 초과 시 0으로 변경
+        distances = np.flip(data.ranges)
+        distances = np.concatenate((distances[180:],distances[:180]))
+        distances[distances > CallBack.threshold] = 0
         boat.scan = distances
 
     @staticmethod
@@ -49,13 +50,13 @@ def loginfoOnce(s):
         rospy.loginfo(s)
         pastPrint = s
 
-def ros_init(is_simulator):
+def ros_init():
     global command_publish
     rospy.init_node('main_node', anonymous=True)
 
     command_publish = rospy.Publisher('/command', Float32MultiArray, queue_size=10)
 
-    if is_simulator:
+    if SETTINGS.isSimulator:
         rospy.Subscriber("Lidar", Float64MultiArray, CallBack.simulator_laser_scan_callback)
     else:
         rospy.Subscriber("scan", LaserScan, CallBack.laser_scan_callback)
@@ -68,8 +69,8 @@ def ros_init(is_simulator):
     ts = message_filters.ApproximateTimeSynchronizer([gps_sub, imu_sub], queue_size=10, slop=0.1, allow_headerless=True)
     ts.registerCallback(lambda gps_data, imu_data: (CallBack.gps_callback(gps_data), CallBack.imu_callback(imu_data)))
 
-def main(is_simulator=False):
-    ros_init(is_simulator)
+def main():
+    ros_init()
     while not rospy.is_shutdown():
         if boat.waypoints:
             waypoint = boat.waypoints[0]
@@ -96,7 +97,6 @@ if __name__ == '__main__':
         pastPrint = None ## 같은 내용 한번만 print 되도록 하기
         command_publish = None
         boat = Boat()
-        main(is_simulator=True)
-        # main()
+        main()
     except rospy.ROSInterruptException:
         pass

@@ -1,6 +1,9 @@
 # -*- coding:utf-8 -*-
 #!/usr/bin/env python3
-
+import sys
+import os
+sys.path.append(os.path.dirname(os.path.abspath(os.path.dirname(__file__))))
+import SETTINGS
 import rospy
 from std_msgs.msg import Float64MultiArray, Float32
 from sensor_msgs.msg import LaserScan
@@ -61,20 +64,18 @@ def imu_callback(data):
     global heading_angle
     heading_angle = data.data  # 방위각 업데이트
 
-def lidar_callback(data):
-    global distances
-    if isinstance(data, LaserScan):
-        distances = np.array(data.ranges)
-        distances = np.flip(distances)
-        distances[distances > 100.0] = 0  # 임계값 초과 시 0으로 변경
-    else:
-        distance_callback(data)
+def laser_scan_callback(data):
+    global distances, angles
+    distances = np.flip(data.ranges)  # 수신한 거리 데이터
+    distances = np.concatenate((distances[180:],distances[:180]))
+    distances[distances > 100] = 0  # 임계값 초과 시 0으로 변경
+    angles = np.radians(np.arange(len(distances)))
 
-def listener(is_simulator=False):
+def listener():
     rospy.init_node('distance_visualizer', anonymous=True)
 
     # 메시지 필터 설정
-    if is_simulator:
+    if SETTINGS.isSimulator:
         lidar_sub = rospy.Subscriber("Lidar", Float64MultiArray, distance_callback)
         gps_sub = message_filters.Subscriber("KABOAT/UTM", Float64MultiArray)
         imu_sub = message_filters.Subscriber("KABOAT/Heading", Float32)
@@ -99,6 +100,6 @@ def listener(is_simulator=False):
 if __name__ == '__main__':
     try:
         # 시뮬레이터 여부에 따라 listener 호출
-        listener(is_simulator=True)  # 'True'로 변경하면 시뮬레이터 모드로 실행
+        listener()  # 'True'로 변경하면 시뮬레이터 모드로 실행
     except rospy.ROSInterruptException:
         pass
