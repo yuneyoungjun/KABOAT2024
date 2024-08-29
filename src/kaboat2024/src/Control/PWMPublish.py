@@ -1,10 +1,13 @@
 #!/usr/bin/env python3
+import os
+import sys
+sys.path.append(os.path.dirname(os.path.abspath(os.path.dirname(__file__))))
 
 import rospy
 from std_msgs.msg import Float32MultiArray, Int16MultiArray
 import time
+import SETTINGS
 
-maxSaturation = 500
 class MotorController:
     def __init__(self):
         rospy.init_node('motor_controller', anonymous=True)
@@ -14,8 +17,6 @@ class MotorController:
         rospy.Subscriber('/command', Float32MultiArray, self.command_callback)
 
         self.last_error = 0.0
-        self.Kp = 20.0  # 비례 계수
-        self.Kd = 5.0  # 미분 계수
 
         self.last_time = time.time()
 
@@ -33,9 +34,9 @@ class MotorController:
         pwmR = tauX - tauN * 0.5
         pwmF = -tauN
 
-        control_values.data[3] = max(-maxSaturation, min(maxSaturation, int(pwmL)))
-        control_values.data[4] = max(-maxSaturation, min(maxSaturation, int(pwmR)))
-        control_values.data[5] = max(-maxSaturation, min(maxSaturation, int(pwmF)))
+        control_values.data[3] = max(-SETTINGS.maxSaturation, min(SETTINGS.maxSaturation, int(pwmL)))
+        control_values.data[4] = max(-SETTINGS.maxSaturation, min(SETTINGS.maxSaturation, int(pwmR)))
+        control_values.data[5] = max(-SETTINGS.maxSaturation, min(SETTINGS.maxSaturation, int(pwmF)))
         if(psi_error == 0 and tauX == 0):
             control_values.data = [0, 0, 0, 0, 0, 0]
         self.control_pub.publish(control_values)
@@ -51,7 +52,7 @@ class MotorController:
         derivative = (error - self.last_error) / dt if dt > 0 else 0
         self.last_error = error
         
-        tauN = self.Kp * error + self.Kd * derivative
+        tauN = SETTINGS.Kp * error + SETTINGS.Kd * derivative
         return tauN
 
     def run(self):
