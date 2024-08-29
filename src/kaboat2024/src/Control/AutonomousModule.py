@@ -8,61 +8,49 @@ from main import Boat
 
 Goal_Psi = 0
 Goal_Distance = 0
-cost_function_values = []  # Cost function 값을 저장할 리스트
-psi_error_publisher = None  # 퍼블리셔를 위한 변수
-psi_error_history = []  # psi_error 값을 저장할 리스트
-
 
 def normalize_angle(angle): return (angle + 180) % 360 - 180
 
+def pathplan(boat=Boat(), goal_x=None, goal_y=None):
+    global Goal_Psi, Goal_Distance
 
-def pathplan(boat = Boat()):
-    global Goal_Psi, Goal_Distance, cost_function_values, psi_error_publisher, psi_error_history
-
-    if(len(boat.scan) == 0):
-        return
+    if len(boat.scan) == 0:
+        return [0, 0]
 
     safe_ld = AutonomousBoatController.calculate_safe_zone(boat.scan)
     cost_function = AutonomousBoatController.calculate_optimal_psi_d(safe_ld, int(Goal_Psi))
     psi_error = sorted(cost_function, key=lambda x: x[1])[0][0]
     psi_error = normalize_angle(psi_error)
     
-    #### 목적지 까지 장애물이 없을 때 ####
-    if(goal_check()):
+    
+    ## TauX를 계산하는 부분
+    if goal_check():
         psi_error = Goal_Psi
-        if(psi_error < 30):
-            tauX = min((Goal_Distance**3) + 120, 500)
-
+        if psi_error < 30:
+            tauX = min((Goal_Distance ** 3) + 120, 500)
         else:
             tauX_dist = min(3 * boat.scan[0] ** 2, 300)
-            tauX_psi = 200/(abs(psi_error) + 1)
+            tauX_psi = 200 / (abs(psi_error) + 1)
             tauX = min(tauX_dist + tauX_psi, 500)
-    
     else:
         tauX_dist = min(4 * Goal_Distance ** 2, 300)
-        tauX_psi = 200/(abs(psi_error) + 1)
+        tauX_psi = 200 / (abs(psi_error) + 1)
         tauX = min(tauX_dist + tauX_psi, 500)
 
-    cost_function_values = np.transpose(cost_function)
+    # 목표 웨이포인트 데이터 표시
+    if goal_x is not None and goal_y is not None:
+        waypoint_x = goal_x - boat.position[0]
+        waypoint_y = goal_y - boat.position[1]
 
 
-    # Waypoint 데이터 표시
-    if boat.waypoints:
-        waypoint_x = [(point[0] - boat.position[0]) for point in boat.waypoints]
-        waypoint_y = [(point[1] - boat.position[1]) for point in boat.waypoints]
-
-        if(goal_passed(boat, boat.waypoints[0][0], boat.waypoints[0][1])):
-            boat.waypoints.pop(0)
-            return True
-
-
-        Goal_Psi = np.arctan2(waypoint_x[0], waypoint_y[0]) * 180 / np.pi - boat.psi
+        Goal_Psi = np.arctan2(waypoint_x, waypoint_y) * 180 / np.pi - boat.psi
         Goal_Psi = normalize_angle(Goal_Psi)
-        Goal_Distance = np.sqrt(np.power(waypoint_x[0], 2) + np.power(waypoint_y[0], 2))
+        Goal_Distance = np.sqrt(np.power(waypoint_x, 2) + np.power(waypoint_y, 2))
 
         return [psi_error, tauX]
     else:
-        return
+        return [0, 0]
+
 
     
 

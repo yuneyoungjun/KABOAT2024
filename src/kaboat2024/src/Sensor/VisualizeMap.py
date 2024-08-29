@@ -116,6 +116,6 @@ def listener(is_simulator=False):
 
 if __name__ == '__main__':
     try:
-        listener(is_simulator=False)  # 시뮬레이터 여부에 따라 설정
+        listener(is_simulator=True)  # 시뮬레이터 여부에 따라 설정
     except rospy.ROSInterruptException:
         pass

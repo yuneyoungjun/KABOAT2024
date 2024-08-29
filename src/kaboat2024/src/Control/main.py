@@ -1,4 +1,3 @@
-# -*- coding:utf-8 -*-
 #!/usr/bin/env python3
 
 import rospy
@@ -36,7 +35,6 @@ class CallBack:
             boat.waypoints = []
         else:
             boat.waypoints.append([data.point.x, data.point.y])
-        print(boat.waypoints)
     @staticmethod
     def gps_callback(data):
         boat.position = data.data
@@ -45,17 +43,18 @@ class CallBack:
     def imu_callback(data):
         boat.psi = data.data
 
+def loginfoOnce(s):
+    global pastPrint
+    if(pastPrint != s):
+        rospy.loginfo(s)
+        pastPrint = s
 
+def ros_init(is_simulator):
+    global command_publish
+    rospy.init_node('main_node', anonymous=True)
 
+    command_publish = rospy.Publisher('/command', Float32MultiArray, queue_size=10)
 
-def listener(is_simulator=False):
-    rospy.init_node('distance_visualizer', anonymous=True)
-
-    # 퍼블리셔 설정
-    command_publish = rospy.Publisher('/command', Float32MultiArray, queue_size=10)  # 주제를 '/command'로 변경
-
-
-    # 적절한 토픽 구독
     if is_simulator:
         rospy.Subscriber("Lidar", Float64MultiArray, CallBack.simulator_laser_scan_callback)
     else:
@@ -64,25 +63,40 @@ def listener(is_simulator=False):
     gps_sub = message_filters.Subscriber("KABOAT/UTM", Float64MultiArray)
     imu_sub = message_filters.Subscriber("KABOAT/Heading", Float32)
 
-    # Waypoint 및 Waypoint Angle 토픽 구독
     rospy.Subscriber("/Waypoint", PointStamped, CallBack.waypoint_callback)
 
     ts = message_filters.ApproximateTimeSynchronizer([gps_sub, imu_sub], queue_size=10, slop=0.1, allow_headerless=True)
     ts.registerCallback(lambda gps_data, imu_data: (CallBack.gps_callback(gps_data), CallBack.imu_callback(imu_data)))
 
-    while(1):
-        path = AutonomousModule.pathplan(boat)
-        if(path == True):
-            print("PAssed")
-            command_publish.publish(Float32MultiArray(data = [0, 0]))
-        elif(type(path)==list and len(path) > 0):
-            command_publish.publish(Float32MultiArray(data = path))
+def main(is_simulator=False):
+    ros_init(is_simulator)
+    while not rospy.is_shutdown():
+        if boat.waypoints:
+            waypoint = boat.waypoints[0]
+            loginfoOnce(f"[Autonomous Mode] [{waypoint[0]:.2f}, {waypoint[1]:.2f}] Start")
+            
+
+            path = AutonomousModule.pathplan(boat, waypoint[0], waypoint[1])
+
+            if AutonomousModule.goal_passed(boat, waypoint[0], waypoint[1], 3):
+
+                command_publish.publish(Float32MultiArray(data=[0, 0]))
+                rospy.loginfo(f"[Autonomous Mode] [{waypoint[0]:.2f}, {waypoint[1]:.2f}] Arrived")
+                boat.waypoints.pop(0)
+            else:
+                command_publish.publish(Float32MultiArray(data=path))
+        else:
+            command_publish.publish(Float32MultiArray(data=[0, 0]))
+            loginfoOnce(f"[Autonomous Mode] WayPoint Empty")
+
 
 
 if __name__ == '__main__':
     try:
+        pastPrint = None ## 같은 내용 한번만 print 되도록 하기
+        command_publish = None
         boat = Boat()
-        listener(is_simulator=True)  # 시뮬레이터 여부에 따라 설정
-        # rospy.spin()
+        main(is_simulator=True)
+        # main()
     except rospy.ROSInterruptException:
         pass
