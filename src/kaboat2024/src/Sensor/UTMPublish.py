@@ -1,12 +1,15 @@
 #!/usr/bin/env python3
+import os
+import sys
+sys.path.append(os.path.dirname(os.path.abspath(os.path.dirname(os.path.abspath(os.path.dirname(__file__))))))
 import rospy
 from sensor_msgs.msg import NavSatFix
 import utm
 from std_msgs.msg import Float64MultiArray
-import RTKSetting
+import SETTINGS
 
-ref_x = RTKSetting.ref_utm_x
-ref_y = RTKSetting.ref_utm_y
+ref_x = SETTINGS.ref_utm_x
+ref_y = SETTINGS.ref_utm_y
 
 def callback(data):
     utm_x, utm_y, _, _ = utm.from_latlon(data.latitude, data.longitude)

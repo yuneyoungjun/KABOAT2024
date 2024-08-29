@@ -6,7 +6,7 @@ from sensor_msgs.msg import LaserScan
 from geometry_msgs.msg import PointStamped
 from std_msgs.msg import Float64MultiArray, Float32, Float32MultiArray
 import message_filters
-import AutonomousModule
+import Control.AutonomousModule as AutonomousModule
 
 class Boat:
     def __init__(self):
