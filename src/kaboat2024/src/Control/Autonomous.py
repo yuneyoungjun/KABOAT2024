@@ -10,7 +10,14 @@ import matplotlib.pyplot as plt
 from matplotlib.animation import FuncAnimation
 import message_filters
 from modules.AutonomousBoatController import AutonomousBoatController
-from main import Boat
+
+
+class Boat:
+    position = [0, 0]
+    psi = 0
+    scan = [0] * 360
+    waypoints = []
+
 # 초기 거리 데이터 설정
 distances = []
 angles = np.radians(np.arange(360)) 
@@ -44,8 +51,8 @@ def update(frame):
     if(len(Boat.scan) == 0):
         return
 
-    safe_ld = autonomousController.calculate_safe_zone(Boat.scan)
-    cost_function = autonomousController.calculate_optimal_psi_d(safe_ld, int(Goal_Psi))
+    safe_ld = AutonomousBoatController.calculate_safe_zone(Boat.scan)
+    cost_function = AutonomousBoatController.calculate_optimal_psi_d(safe_ld, int(Goal_Psi))
     psi_error = sorted(cost_function, key=lambda x: x[1])[0][0]
     psi_error = normalize_angle(psi_error)
     
@@ -228,7 +235,7 @@ if __name__ == '__main__':
         autonomousController = AutonomousBoatController()
 
         # 시뮬레이터 여부에 따라 설정
-        listener(is_simulator=False)
-        # listener(is_simulator=True)
+        # listener(is_simulator=False)
+        listener(is_simulator=True)
     except rospy.ROSInterruptException:
         pass

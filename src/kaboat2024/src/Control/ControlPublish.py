@@ -4,7 +4,7 @@ import rospy
 from std_msgs.msg import Float32MultiArray, Int16MultiArray
 import time
 
-maxSaturation = 150
+maxSaturation = 500
 class MotorController:
     def __init__(self):
         rospy.init_node('motor_controller', anonymous=True)
@@ -36,7 +36,8 @@ class MotorController:
         control_values.data[3] = max(-maxSaturation, min(maxSaturation, int(pwmL)))
         control_values.data[4] = max(-maxSaturation, min(maxSaturation, int(pwmR)))
         control_values.data[5] = max(-maxSaturation, min(maxSaturation, int(pwmF)))
-
+        if(psi_error == 0 and tauX == 0):
+            control_values.data = [0, 0, 0, 0, 0, 0]
         self.control_pub.publish(control_values)
         print(control_values)
 

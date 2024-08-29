@@ -2,18 +2,11 @@ import numpy as np
 from math import floor, ceil
 
 class AutonomousBoatController:
-    def __init__(self):
-        # Constants and Settings
-        self.BOAT_WIDTH = 0.7
-        self.AVOID_RANGE = 2
-        self.MAX_RANGE = 5
-        self.GAIN_PSI = 1
-        self.GAIN_DISTANCE = 8
-
-        # Initialize boat state
-        self.pos = [0, 0]
-        self.psi = 0
-        self.lidar_data = [0] * 360
+    BOAT_WIDTH = 1.3
+    AVOID_RANGE = 7
+    MAX_RANGE = 5
+    GAIN_PSI = 1
+    GAIN_DISTANCE = 8
 
 
     def cost_func_angle(x):

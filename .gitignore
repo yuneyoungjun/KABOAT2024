@@ -6,3 +6,5 @@ src/handsfree_ros_imu/
 src/mapviz/
 __pycache__/
 *.pyc
+
+test/
