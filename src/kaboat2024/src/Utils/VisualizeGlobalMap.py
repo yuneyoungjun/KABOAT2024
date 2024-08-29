@@ -81,7 +81,7 @@ def listener():
         imu_sub = message_filters.Subscriber("KABOAT/Heading", Float32)
 
     else:
-        lidar_sub = rospy.Subscriber("scan", LaserScan, lidar_callback)
+        lidar_sub = rospy.Subscriber("scan", LaserScan, laser_scan_callback)
         gps_sub = message_filters.Subscriber("KABOAT/UTM", Float64MultiArray)
         imu_sub = message_filters.Subscriber("KABOAT/Heading", Float32)
 
