@@ -14,7 +14,6 @@ class Boat:
         self.psi = 0
         self.scan = [0] * 360
         self.waypoints = [
-            [-28.7, 7]
         ]
 
 class CallBack:
@@ -81,7 +80,7 @@ def main():
 
             path = AutonomousModule.pathplan(boat, waypoint[0], waypoint[1])
 
-            if AutonomousModule.goal_passed(boat, waypoint[0], waypoint[1], 1):
+            if AutonomousModule.goal_passed(boat, waypoint[0], waypoint[1], SETTINGS.GoalRange):
 
                 command_publish.publish(Float32MultiArray(data=[0, 0]))
                 rospy.loginfo(f"[Autonomous Mode] [{waypoint[0]:.2f}, {waypoint[1]:.2f}] Arrived")

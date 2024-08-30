@@ -8,7 +8,7 @@ ref_gps_x, ref_gps_y = 127.401794, 36.395991
 
 ref_utm_x, ref_utm_y, _, _ = utm.from_latlon(ref_gps_y, ref_gps_x)
 
-isSimulator = False
+isSimulator = True
 if(isSimulator==False):
 
     """
@@ -23,8 +23,7 @@ if(isSimulator==False):
     AVOID_RANGE = 2
     GAIN_PSI = 1
     GAIN_DISTANCE = 8
-
-
+    GoalRange = 2
 
     """
         PID Control
@@ -33,9 +32,8 @@ if(isSimulator==False):
         Kd              미분 계수
         maxSaturation   모터 최대 출력
     """
-
-    Kp = 10.0  # 비례 계수
-    Kd = 5.0  # 미분 계수
+    Kp = 10.0 
+    Kd = 5.0 
     maxSaturation = 200
 
 else:
@@ -46,7 +44,8 @@ else:
     AVOID_RANGE = 7
     GAIN_PSI = 1
     GAIN_DISTANCE = 8
+    GoalRange = 2
 
     Kp = 20.0  # 비례 계수
     Kd = 5.0  # 미분 계수
-    maxSaturation = 450
+    maxSaturation = 250

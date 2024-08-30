@@ -5,18 +5,18 @@ sys.path.append(os.path.dirname(os.path.abspath(os.path.dirname(__file__))))
 import SETTINGS
 import rospy
 from sensor_msgs.msg import LaserScan
-from std_msgs.msg import Float64MultiArray, Float32
+from std_msgs.msg import Float64MultiArray, Float32MultiArray, Float32
 from geometry_msgs.msg import PointStamped
 import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib.animation import FuncAnimation
 import message_filters
-
+from Control.AutonomousModule import calculate_safe_zone
 # 초기 거리 데이터 설정
 distances = []
 angles = []
 waypoints = []  # Waypoint 데이터를 저장할 리스트
-waypoint_angle = 0  # Waypoint 각도를 저장할 리스트
+psi_error = 0  # Waypoint 각도를 저장할 리스트
 threshold = 100.0  # 특정 거리 임계값 설정 (예: 100.0 센티미터)
 
 gps_position = []
@@ -24,7 +24,7 @@ heading_angle = 0
 
 # 시각화 함수
 def update(frame):
-    global distances, angles, waypoints, waypoint_angle
+    global distances, angles, waypoints, psi_error
 
     ax.clear()
     ax.set_title('Distance Data in Polar Coordinates', va='bottom')
@@ -53,8 +53,10 @@ def update(frame):
             ax.text(angle, distance, str(idx + 1), color='black', fontsize=8, ha='center', va='bottom')
 
     # Waypoint 각도 표시
-    ax.plot([0, np.radians(waypoint_angle)], [0, 15], color='green', label='Waypoint Angle')  # 각도는 고정된 거리에서 표시
+    ax.plot([0, np.radians(psi_error)], [0, 15], color='green', label='Waypoint Angle')  # 각도는 고정된 거리에서 표시
 
+
+    ax.fill(angles, calculate_safe_zone(distances), color=[0, 0, 1, 0.2])
     ax.grid(True)
     ax.legend()
 
@@ -79,8 +81,8 @@ def waypoint_callback(data):
         waypoints.append([data.point.x, data.point.y])
 
 def waypoint_angle_callback(data):
-    global waypoint_angle
-    waypoint_angle = data.data # 각도 데이터 추가
+    global psi_error
+    psi_error = data.data[0] 
 
 def gps_callback(data):
     global gps_position
@@ -104,7 +106,7 @@ def listener():
 
     # Waypoint 및 Waypoint Angle 토픽 구독
     rospy.Subscriber("/Waypoint", PointStamped, waypoint_callback)
-    rospy.Subscriber("/waypoint_angle", Float32, waypoint_angle_callback)
+    rospy.Subscriber("/command", Float32MultiArray, waypoint_angle_callback)
 
     ts = message_filters.ApproximateTimeSynchronizer([gps_sub, imu_sub], queue_size=10, slop=0.1, allow_headerless=True)
     ts.registerCallback(lambda gps_data, imu_data: (gps_callback(gps_data), imu_callback(imu_data)))
