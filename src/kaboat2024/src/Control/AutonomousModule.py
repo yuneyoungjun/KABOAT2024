@@ -93,20 +93,23 @@ def pathplan(boat=Boat(), goal_x=None, goal_y=None):
             tauX_dist = min(3 * boat.scan[0] ** 2, 300)
             tauX_psi = 200 / (abs(psi_error) + 1)
             tauX = min(tauX_dist + tauX_psi, 500)
+
+        tauX = 300
     else:
         tauX_dist = min(4 * Goal_Distance ** 2, 300)
         tauX_psi = 200 / (abs(psi_error) + 1)
         tauX = min(tauX_dist + tauX_psi, 500)
+        tauX = 150
 
     # 목표 웨이포인트 데이터 표시
     if goal_x is not None and goal_y is not None:
-        waypoint_x = goal_x - boat.position[0]
-        waypoint_y = goal_y - boat.position[1]
+        dx = goal_x - boat.position[0]
+        dy = goal_y - boat.position[1]
 
 
-        Goal_Psi = np.arctan2(waypoint_x, waypoint_y) * 180 / np.pi - boat.psi
+        Goal_Psi = np.arctan2(dx, dy) * 180 / np.pi - boat.psi
         Goal_Psi = normalize_angle(Goal_Psi)
-        Goal_Distance = np.sqrt(np.power(waypoint_x, 2) + np.power(waypoint_y, 2))
+        Goal_Distance = np.sqrt(np.power(dx, 2) + np.power(dy, 2))
 
         print(Goal_Psi)
         return [psi_error, tauX]
