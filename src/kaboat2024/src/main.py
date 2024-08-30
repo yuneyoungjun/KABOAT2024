@@ -14,6 +14,7 @@ class Boat:
         self.psi = 0
         self.scan = [0] * 360
         self.waypoints = [
+            [1.6417313533020206, 5.421214632689953]
         ]
 
 class CallBack:

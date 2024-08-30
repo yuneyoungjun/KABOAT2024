@@ -9,7 +9,7 @@ from math import pi
 from sensor_msgs.msg import Imu
 from geometry_msgs.msg import QuaternionStamped
 
-bias = -27
+bias = 242
 def normalize_angle(angle): return (angle + 180) % 360 - 180
 def getYaw(q):
     quaternion = (q.x, q.y, q.z, q.w)

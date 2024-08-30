@@ -8,7 +8,7 @@ ref_gps_x, ref_gps_y = 127.401794, 36.395991
 
 ref_utm_x, ref_utm_y, _, _ = utm.from_latlon(ref_gps_y, ref_gps_x)
 
-isSimulator = True
+isSimulator = False
 if(isSimulator==False):
 
     """
@@ -22,7 +22,7 @@ if(isSimulator==False):
     BOAT_WIDTH = 0.3
     AVOID_RANGE = 2
     GAIN_PSI = 1
-    GAIN_DISTANCE = 8
+    GAIN_DISTANCE = 0
     GoalRange = 2
 
     """

@@ -108,6 +108,7 @@ def pathplan(boat=Boat(), goal_x=None, goal_y=None):
         Goal_Psi = normalize_angle(Goal_Psi)
         Goal_Distance = np.sqrt(np.power(waypoint_x, 2) + np.power(waypoint_y, 2))
 
+        print(Goal_Psi)
         return [psi_error, tauX]
     else:
         return [0, 0]

@@ -55,8 +55,8 @@ def update(frame):
     # Waypoint 각도 표시
     ax.plot([0, np.radians(psi_error)], [0, 15], color='green', label='Waypoint Angle')  # 각도는 고정된 거리에서 표시
 
-
-    ax.fill(angles, calculate_safe_zone(distances), color=[0, 0, 1, 0.2])
+    if(len(distances)>0):
+        ax.fill(angles, calculate_safe_zone(distances), color=[0, 0, 1, 0.2])
     ax.grid(True)
     ax.legend()
 
@@ -82,6 +82,7 @@ def waypoint_callback(data):
 
 def waypoint_angle_callback(data):
     global psi_error
+    print(psi_error)
     psi_error = data.data[0] 
 
 def gps_callback(data):
