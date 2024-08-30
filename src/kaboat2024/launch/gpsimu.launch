@@ -11,7 +11,7 @@
 
     <node  name="xsens_mti_node" pkg="xsens_mti_driver" type="xsens_mti_node" output="screen">
         <rosparam command="load" file="$(find xsens_mti_driver)/param/xsens_mti_node.yaml" />
-        <param name="port" type="str" value="/dev/ttyIMU"/>
+        <param name="port" type="str" value="/dev/ttyUSB0"/>
     </node>
 
     <!-- Include NTRIP configuration -->

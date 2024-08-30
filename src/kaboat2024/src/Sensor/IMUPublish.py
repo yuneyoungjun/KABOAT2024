@@ -9,7 +9,8 @@ from math import pi
 from sensor_msgs.msg import Imu
 from geometry_msgs.msg import QuaternionStamped
 
-
+bias = -27
+def normalize_angle(angle): return (angle + 180) % 360 - 180
 def getYaw(q):
     quaternion = (q.x, q.y, q.z, q.w)
     euler = tf.transformations.euler_from_quaternion(quaternion)
@@ -18,7 +19,7 @@ def getYaw(q):
 
 def callback(msg):
     data = Float32()
-    data.data = getYaw(msg.orientation)
+    data.data = normalize_angle(getYaw(msg.orientation) + bias)
     # data.data = getYaw(msg.quaternion)
     print("Psi : {0:0.1f}" .format(data.data))
     pub.publish(data)

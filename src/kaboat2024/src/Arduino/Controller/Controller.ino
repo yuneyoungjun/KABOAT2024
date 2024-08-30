@@ -6,7 +6,7 @@
 Servo SL, SR, SF;  // Servo Motor
 Servo TL, TR, TF;  // Thruster 
 
-int maxSaturation = 450;
+int maxSaturation = 200;
 // tx12
 int sensorPin[] = {0, 8, 9, 10, 11, 12, 13};
 int channel[] = {0, 0, 0, 0, 0, 0, 0};

@@ -13,7 +13,9 @@ class Boat:
         self.position = [0, 0]
         self.psi = 0
         self.scan = [0] * 360
-        self.waypoints = []
+        self.waypoints = [
+            [-28.7, 7]
+        ]
 
 class CallBack:
     threshold = 100.0  # 특정 거리 임계값 설정 (예: 100.0 센티미터)
@@ -79,7 +81,7 @@ def main():
 
             path = AutonomousModule.pathplan(boat, waypoint[0], waypoint[1])
 
-            if AutonomousModule.goal_passed(boat, waypoint[0], waypoint[1], 3):
+            if AutonomousModule.goal_passed(boat, waypoint[0], waypoint[1], 1):
 
                 command_publish.publish(Float32MultiArray(data=[0, 0]))
                 rospy.loginfo(f"[Autonomous Mode] [{waypoint[0]:.2f}, {waypoint[1]:.2f}] Arrived")

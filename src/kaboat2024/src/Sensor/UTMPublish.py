@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 import os
 import sys
-sys.path.append(os.path.dirname(os.path.abspath(os.path.dirname(os.path.abspath(os.path.dirname(__file__))))))
+sys.path.append(os.path.dirname(os.path.abspath(os.path.dirname(__file__))))
 import rospy
 from sensor_msgs.msg import NavSatFix
 import utm
