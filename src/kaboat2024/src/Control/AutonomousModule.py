@@ -111,7 +111,7 @@ def pathplan(boat=Boat(), goal_x=None, goal_y=None):
         Goal_Psi = normalize_angle(Goal_Psi)
         Goal_Distance = np.sqrt(np.power(dx, 2) + np.power(dy, 2))
 
-        print(Goal_Psi)
+
         return [psi_error, tauX]
     else:
         return [0, 0]
@@ -175,3 +175,16 @@ def goal_passed(boat = Boat(), goal_x = 0, goal_y = 0, goal_threshold = 2):
     if((boat.position[0] - goal_x)**2 + (boat.position[1] - goal_y)**2 < goal_threshold ** 2):
         isPassed = True
     return isPassed
+
+
+
+
+
+
+def rotate(boat = Boat(), psi_d=None):
+    """
+    psi_error를 받고 tau_x는 0으로 해서 실행
+
+    """
+    psi_error=normalize_angle(psi_d - boat.psi)
+    return [psi_error,0]

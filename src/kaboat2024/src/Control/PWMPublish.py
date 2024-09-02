@@ -32,7 +32,7 @@ class MotorController:
         control_values = Int16MultiArray(data=[0, 0, 0, 0, 0, 0])
         pwmL = tauX + tauN * 0.5
         pwmR = tauX - tauN * 0.5
-        pwmF = -tauN
+        pwmF = tauN
 
         control_values.data[3] = max(-SETTINGS.maxSaturation, min(SETTINGS.maxSaturation, int(pwmL)))
         control_values.data[4] = max(-SETTINGS.maxSaturation, min(SETTINGS.maxSaturation, int(pwmR)))

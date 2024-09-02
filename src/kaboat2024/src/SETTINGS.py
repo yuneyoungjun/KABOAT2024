@@ -8,7 +8,7 @@ ref_gps_x, ref_gps_y = 127.401794, 36.395991
 
 ref_utm_x, ref_utm_y, _, _ = utm.from_latlon(ref_gps_y, ref_gps_x)
 
-isSimulator = False
+isSimulator = True
 if(isSimulator==False):
 
     """
@@ -33,9 +33,8 @@ if(isSimulator==False):
         maxSaturation   모터 최대 출력
     """
     Kp = 10.0 
-    Kd = 5.0 
+    Kd = 0.1
     maxSaturation = 200
-
 else:
     """ 
         시뮬레이터의 파라미터 값 
@@ -46,6 +45,8 @@ else:
     GAIN_DISTANCE = 8
     GoalRange = 2
 
-    Kp = 20.0  # 비례 계수
-    Kd = 5.0  # 미분 계수
-    maxSaturation = 250
+    Kp = 100.0  # 비례 계수
+    Kd = 0.1  # 미분 계수
+    maxSaturation = 2500
+
+

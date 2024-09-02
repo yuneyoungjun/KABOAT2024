@@ -38,6 +38,7 @@ class CallBack:
             boat.waypoints = []
         else:
             boat.waypoints.append([data.point.x, data.point.y])
+        print(boat.waypoints)
     @staticmethod
     def gps_callback(data):
         boat.position = data.data
@@ -73,24 +74,41 @@ def ros_init():
 
 def main():
     ros_init()
-    while not rospy.is_shutdown():
-        if boat.waypoints:
-            waypoint = boat.waypoints[0]
-            loginfoOnce(f"[Autonomous Mode] [{waypoint[0]:.2f}, {waypoint[1]:.2f}] Start")
+    # while not rospy.is_shutdown():
+    #     if boat.waypoints:
+    #         waypoint = boat.waypoints[0]
+    #         loginfoOnce(f"[Autonomous Mode] [{waypoint[0]:.2f}, {waypoint[1]:.2f}] Start")
             
 
-            path = AutonomousModule.pathplan(boat, waypoint[0], waypoint[1])
+    #         path = AutonomousModule.pathplan(boat, waypoint[0], waypoint[1])
 
-            if AutonomousModule.goal_passed(boat, waypoint[0], waypoint[1], SETTINGS.GoalRange):
+    #         if AutonomousModule.goal_passed(boat, waypoint[0], waypoint[1], SETTINGS.GoalRange):
 
-                command_publish.publish(Float32MultiArray(data=[0, 0]))
-                rospy.loginfo(f"[Autonomous Mode] [{waypoint[0]:.2f}, {waypoint[1]:.2f}] Arrived")
-                boat.waypoints.pop(0)
-            else:
-                command_publish.publish(Float32MultiArray(data=path))
-        else:
-            command_publish.publish(Float32MultiArray(data=[0, 0]))
-            loginfoOnce(f"[Autonomous Mode] WayPoint Empty")
+    #             command_publish.publish(Float32MultiArray(data=[0, 0]))
+    #             rospy.loginfo(f"[Autonomous Mode] [{waypoint[0]:.2f}, {waypoint[1]:.2f}] Arrived")
+    #             boat.waypoints.pop(0)
+    #         else:
+    #             command_publish.publish(Float32MultiArray(data=path))
+    #     else:
+    #         command_publish.publish(Float32MultiArray(data=[0, 0]))
+    #         loginfoOnce(f"[Autonomous Mode] WayPoint Empty")기
+
+    """
+    배를 제자리에서 회전하도록 만드는 부분
+    """
+    #############################################################################################################################################################
+    while not rospy.is_shutdown():
+            
+        """
+        배를 제자리에서 회전하도록 만드는 부분
+        """
+        path = AutonomousModule.rotate(boat, 180)
+
+        command_publish.publish(Float32MultiArray(data=path))
+        rospy.loginfo(path)
+
+        loginfoOnce(f"[Autonomous Mode] WayPoint Empty")
+
 
 
 
@@ -99,6 +117,7 @@ if __name__ == '__main__':
         pastPrint = None ## 같은 내용 한번만 print 되도록 하기
         command_publish = None
         boat = Boat()
+        print(boat.waypoints)
         main()
     except rospy.ROSInterruptException:
         pass
