@@ -45,8 +45,8 @@ else:
     GAIN_DISTANCE = 8
     GoalRange = 2
 
-    Kp = 100.0  # 비례 계수
-    Kd = 0.1  # 미분 계수
-    maxSaturation = 2500
+    Kp = 10.0  # 비례 계수
+    Kd = 1  # 미분 계수
+    maxSaturation = 250
 
 

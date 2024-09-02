@@ -63,6 +63,32 @@ def calculate_optimal_psi_d(ld, safe_ld, goal_psi):
             theta_list.append([i, cost])
     return sorted(theta_list, key=lambda x: x[1])[0][0]
 
+
+def Final_cost(ld, safe_ld, goal_psi):
+    """
+    Cost함수를 적용하여 각도별 Cost를 계산
+    목적지 까지의 각도와 각도별 LaserScan 데이터에 대한 함수 사용
+
+    Args:
+        LaserScan ld
+        Float[] safe_ld
+        Float goal_psi
+
+    Returns:
+        Cost가 가장 낮은 각도 리턴
+    """
+    theta_list = [[0, 10000]]
+
+    for i in range(-180, 180):
+        if safe_ld[i] > 0:
+            cost = (SETTINGS.GAIN_PSI * cost_func_angle(i - goal_psi) + 
+                    SETTINGS.GAIN_DISTANCE * cost_func_distance(ld[i]))
+            theta_list.append(cost)
+        else:
+            theta_list.append(11110)
+    theta_list.pop(0)
+    return theta_list
+
 def pathplan(boat=Boat(), goal_x=None, goal_y=None):
     """
     LaserScan 데이터를 바탕으로 최적의 TauX, psi_e 값을 찾는 함수

@@ -14,6 +14,9 @@ from matplotlib.patches import Polygon
 import message_filters
 import tkinter as tk
 from geometry_msgs.msg import PointStamped
+import Control.AutonomousModule as AutonomousModule
+import math
+
 
 # 초기 거리 데이터 설정
 distances = [0] * 360
@@ -28,10 +31,13 @@ visual_size = 40
 
 # 클릭된 좌표 저장 리스트
 clicked_points = []
+desired_heading=0
+cost_x_List=[]
+cost_y_List=[]
 field_points=[[-5,-5],[-5,24],[60,24],[60,-5]]
 # 시각화 함수
 def update(frame):
-    global distances, gps_position, heading_angle
+    global distances, gps_position, heading_angle,cost_x_List,cost_y_List,desired_heading
     
     # 평면 그래프 업데이트
     ax.clear()
@@ -62,6 +68,28 @@ def update(frame):
         
     # 4개의 점이 입력된 경우 사각형 그리기
     polygon = Polygon(field_points, closed=True, fill=None, edgecolor='orange')
+
+    try:
+        cost_x_List=[]
+        cost_y_List=[]
+        dx = waypoint.point.x - gps_position[0]
+        dy = waypoint.point.y - gps_position[1]
+
+
+        Goal_Psi = np.arctan2(dx, dy) * 180 / np.pi - heading_angle
+        Goal_Psi = AutonomousModule.normalize_angle(Goal_Psi)
+        cost=AutonomousModule.Final_cost(distances,AutonomousModule.calculate_safe_zone(distances),Goal_Psi)
+        desired_heading=AutonomousModule.calculate_optimal_psi_d(distances,AutonomousModule.calculate_safe_zone(distances),Goal_Psi)
+        for i in range(-180,180):
+            cost_x_List.append([gps_position[0],gps_position[0] + 10/(cost[i]+1) * np.cos(np.radians(AutonomousModule.normalize_angle(i+heading_angle)))])
+            cost_y_List.append([gps_position[1],gps_position[1] + 10/(cost[i]+1) * np.sin(np.radians(AutonomousModule.normalize_angle(i+heading_angle)))])
+        print(desired_heading)
+        ax.scatter(cost_x_List[desired_heading], cost_y_List[desired_heading])
+    except:
+        pass
+
+
+    ax.plot(cost_x_List, cost_y_List, color='purple', linewidth=0.5, label='Cost')
     ax.add_patch(polygon)
     ax.grid(True)
     ax.legend()
@@ -85,11 +113,13 @@ def laser_scan_callback(data):
     distances[distances > 100] = 0  # 임계값 초과 시 0으로 변경
     angles = np.radians(np.arange(len(distances)))
 def publishWaypoint(x, y, z):
+    global waypoint,cost_x_List,cost_y_List
     waypoint=PointStamped()
     waypoint.point.x = x
     waypoint.point.y = y
     waypoint.point.z = z
     Waypont_pub.publish(waypoint)
+
 
 # 클릭된 좌표 초기화 함수
 def reset_points():
