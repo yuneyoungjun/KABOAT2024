@@ -80,11 +80,18 @@ def update(frame):
         Goal_Psi = AutonomousModule.normalize_angle(Goal_Psi)
         cost=AutonomousModule.Final_cost(distances,AutonomousModule.calculate_safe_zone(distances),Goal_Psi)
         desired_heading=AutonomousModule.calculate_optimal_psi_d(distances,AutonomousModule.calculate_safe_zone(distances),Goal_Psi)
-        for i in range(-180,180):
-            cost_x_List.append([gps_position[0],gps_position[0] + 10/(cost[i]+1) * np.cos(np.radians(AutonomousModule.normalize_angle(i+heading_angle)))])
-            cost_y_List.append([gps_position[1],gps_position[1] + 10/(cost[i]+1) * np.sin(np.radians(AutonomousModule.normalize_angle(i+heading_angle)))])
-        print(desired_heading)
-        ax.scatter(cost_x_List[desired_heading], cost_y_List[desired_heading])
+        if heading_angle>0:
+            for i in range(-180,180):
+                prepared_i=AutonomousModule.normalize_angle(i+180)
+                cost_x_List.append([gps_position[0],gps_position[0] + 10/(cost[i]+1) * np.cos(np.radians(prepared_i))])
+                cost_y_List.append([gps_position[1],gps_position[1] + 10/(cost[i]+1) * np.sin(np.radians(prepared_i))])
+        else:
+            for i in range(-180,180):
+                prepared_i=AutonomousModule.normalize_angle(-i)
+                cost_x_List.append([gps_position[0],gps_position[0] + 10/(cost[i]+1) * np.cos(np.radians(prepared_i))])
+                cost_y_List.append([gps_position[1],gps_position[1] + 10/(cost[i]+1) * np.sin(np.radians(prepared_i))])
+        print(desired_heading,AutonomousModule.normalize_angle(-desired_heading+90),heading_angle)
+        ax.scatter(cost_x_List[AutonomousModule.normalize_angle(desired_heading)], cost_y_List[AutonomousModule.normalize_angle(desired_heading)])
     except:
         pass
 
