@@ -85,7 +85,7 @@ def Final_cost(ld, safe_ld, goal_psi):
                     SETTINGS.GAIN_DISTANCE * cost_func_distance(ld[i]))
             theta_list.append(cost)
         else:
-            theta_list.append(11110)
+            theta_list.append(1000)
     theta_list.pop(0)
     return theta_list
 
