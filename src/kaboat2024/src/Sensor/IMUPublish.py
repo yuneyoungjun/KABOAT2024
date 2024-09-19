@@ -12,8 +12,9 @@ from geometry_msgs.msg import Vector3Stamped
 import message_filters
 
 # 필터 파라미터 및 전역 변수 초기화
-alpha = 0.97
+alpha = 0.7
 current_heading = 0.0
+bias=0
 last_time = None  # 초기화 시 None으로 설정
 time_data = []
 gyro_data = []
@@ -31,7 +32,7 @@ def getYaw(q):
     return yaw
 
 def callback(msg,mag):
-    global current_heading, last_time, alpha, time_data, gyro_data, accel_data, yaw_data, heading_data,Yaw_average
+    global current_heading, last_time, alpha, time_data, gyro_data, accel_data, yaw_data, heading_data,roll,pitch
 
     current_time = rospy.Time.now()
     
@@ -46,6 +47,9 @@ def callback(msg,mag):
     gyro_z = -msg.angular_velocity.z * 180 / pi
     gyro_data.append(gyro_z)
 
+
+
+    roll,pitch=calculate_roll_pitch(msg)
     # 가속도계를 이용해 각도 계산
     accel_angle = calculate_accel_angle(mag)
     accel_data.append(accel_angle)
@@ -59,6 +63,7 @@ def callback(msg,mag):
     # HEADING 퍼블리시
     heading_msg = Float64()
     heading_msg.data = current_heading
+    print(current_heading,yaw)
     heading_publisher.publish(heading_msg)
     heading_data.append(current_heading)
     # Yaw 계산
@@ -76,25 +81,42 @@ def callback(msg,mag):
 
 
 
+def calculate_roll_pitch(imu_msg):
+    """가속도계를 사용하여 roll 및 pitch 값을 계산"""
+    accel_x = imu_msg.linear_acceleration.x
+    accel_y = imu_msg.linear_acceleration.y
+    accel_z = imu_msg.linear_acceleration.z
+
+    # Roll 및 Pitch 계산
+    roll = math.atan2(accel_y, accel_z)
+    pitch = math.atan2(-accel_x, math.sqrt(accel_y**2 + accel_z**2))
+    
+    return roll, pitch
+
 def calculate_accel_angle(msg):
+    global pitch,roll
     # 가속도계 데이터에서 x, y 성분을 가져옵니다.
     accel_x = msg.vector.x
     accel_y = msg.vector.y
     accel_z = msg.vector.z # 중력 보정
+    A=math.sqrt(accel_x**2+accel_y**2+accel_z**2)
 
     # 아크탄젠트를 사용하여 각도를 계산합니다.
-    angle = math.atan2(accel_y, accel_x)*180/math.pi
+    yaw = math.atan2(accel_y, accel_x)*180/math.pi
+    angle=-math.atan2(accel_z*math.sin(roll)-accel_y*math.cos(roll),accel_x*math.cos(pitch)+accel_y*math.sin(roll)*math.sin(pitch)+accel_z*math.sin(pitch)*math.cos(roll))*180/math.pi+bias
     return angle
 
 
 
 def plot(frame):
     global time_data, gyro_data, accel_data, yaw_data, heading_data
-    ax1.clear()
-    ax2.clear()
     try:
+
+        ax1.clear()
+        ax2.clear()
         # 첫 번째 서브플롯: 자이로 및 가속도 데이터
-        ax1.plot(time_data, yaw_data, label='Gyro Z', color='r')
+        # ax1.plot(time_data, yaw_data, label='Gyro Z', color='r')
+        ax1.plot(time_data, gyro_data, label='Gyro Z', color='r')
         ax1.plot(time_data, accel_data, label='Accel Angle', color='b')
         ax1.set_xlabel('Time (s)')
         ax1.set_ylabel('Degrees')
